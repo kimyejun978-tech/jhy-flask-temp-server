@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updatedAt": "2026-08-24T08:00:00+09:00",
+  "updatedAt": "2026-08-24T08:53:00+09:00",
   "events": [
     {
       "title": "2026 K-ICT WEEK in BUSAN",
@@ -141,6 +141,20 @@
       "importance": "HIGH",
       "summary": "연구개발 과정에 AI Agent를 적용하는 아이디어·프로토타입 대회. 개인 또는 최대 5명, 본선 10팀, 총상금 1,000만 원.",
       "sourceUrl": "https://www.nst.re.kr/www/selectBbsNttView.do?bbsNo=16&key=57&nttNo=51804&pageIndex=1&searchCnd=all"
+    },
+    {
+      "title": "2026 모두의 AI 실험실 AI 서비스 경진대회",
+      "categories": ["AI", "AI 서비스", "바이브코딩", "경진대회"],
+      "startDate": "2026-08-18",
+      "endDate": null,
+      "deadline": "2026-09-06T18:00:00+09:00",
+      "location": null,
+      "isOnline": null,
+      "fee": null,
+      "highSchoolAllowed": true,
+      "importance": "HIGH",
+      "summary": "만 15세 이상 국민이 개인 또는 최대 4인 팀으로 참가해 개인·지역·사회 문제를 해결하는 AI 서비스를 개발하는 대회. 바이브코딩 토큰, 클라우드·개발도구·데이터/API와 본선 진출팀 대상 빅테크 코칭·멘토링을 지원하며 총상금은 2,600만 원.",
+      "sourceUrl": "https://contest.aitestbed.kr/"
     }
   ]
 }
