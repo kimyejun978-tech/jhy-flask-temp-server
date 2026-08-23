@@ -10,7 +10,7 @@ permissions:
 
 jobs:
   build-apk:
-    if: github.head_ref == 'devfeed-apk-build'
+    if: startsWith(github.head_ref, 'devfeed-apk-')
     runs-on: ubuntu-latest
     timeout-minutes: 35
 
