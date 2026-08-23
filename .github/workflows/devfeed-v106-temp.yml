@@ -45,6 +45,8 @@ jobs:
           cp devfeed-build/override-client.ts devfeed-build/src/mobile/src/api/client.ts
           cp devfeed-build/override-root-layout.tsx devfeed-build/src/mobile/app/_layout.tsx
           cp devfeed-build/override-tabs-layout.tsx 'devfeed-build/src/mobile/app/(tabs)/_layout.tsx'
+          cp devfeed-build/override-hooks.ts devfeed-build/src/mobile/src/api/hooks.ts
+          cp devfeed-build/override-event-detail.tsx 'devfeed-build/src/mobile/app/event/[id].tsx'
           cp devfeed-build/v106/override-settings.tsx devfeed-build/src/mobile/app/settings.tsx
           cp devfeed-build/v106/override-app.json devfeed-build/src/mobile/app.json
 
