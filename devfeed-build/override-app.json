@@ -2,7 +2,7 @@
   "expo": {
     "name": "DevFeed",
     "slug": "devfeed",
-    "version": "1.0.2",
+    "version": "1.0.4",
     "orientation": "portrait",
     "scheme": "devfeed",
     "userInterfaceStyle": "automatic",
@@ -13,7 +13,7 @@
     ],
     "android": {
       "package": "app.devfeed.mobile",
-      "versionCode": 2
+      "versionCode": 4
     },
     "ios": {
       "bundleIdentifier": "app.devfeed.mobile"
