@@ -1,1 +1,1 @@
-run diagnostics 2026-08-23T23:01+09:00
+run diagnostics after collector wait 2026-08-23T23:06+09:00
