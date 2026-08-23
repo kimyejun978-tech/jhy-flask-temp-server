@@ -1,0 +1,51 @@
+name: DevFeed Diagnostics Temporary
+
+on:
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  diagnose:
+    if: github.head_ref == 'devfeed-live-apk'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Probe live API and source feeds
+        shell: bash
+        run: |
+          set -uo pipefail
+          API='https://devfeed-api.kimyejun978.workers.dev'
+          echo '=== LIVE API ==='
+          for p in /health /v1/events /v1/trends /v1/ai-news; do
+            echo "--- $p"
+            body=$(curl -L --max-time 20 -sS -w '\nHTTP:%{http_code}\n' "$API$p" || true)
+            printf '%s\n' "$body" | head -c 8000
+            echo
+          done
+          echo '=== COUNTS ==='
+          for p in /v1/events /v1/trends /v1/ai-news; do
+            curl -L --max-time 20 -sS "$API$p" -o /tmp/out.json || true
+            python3 - "$p" <<'PY'
+          import json,sys
+          p=sys.argv[1]
+          try:
+            d=json.load(open('/tmp/out.json'))
+            items=d.get('items',[]) if isinstance(d,dict) else []
+            print(p, 'count=', len(items))
+            for x in items[:8]: print(' -', x.get('title'))
+          except Exception as e: print(p,'parse error',e)
+          PY
+          done
+          echo '=== SOURCE PROBES ==='
+          probe(){ name="$1"; url="$2"; echo "--- $name"; curl -L --max-time 25 -A 'Mozilla/5.0 DevFeedDiag/1.0' -sS -o /tmp/src -w 'HTTP:%{http_code} SIZE:%{size_download} TYPE:%{content_type}\n' "$url" || true; head -c 500 /tmp/src | tr '\n' ' '; echo; }
+          probe 'COEX' 'https://www.coex.co.kr/event/exhibitions-calendar/'
+          probe 'DCC' 'https://dcckorea.or.kr/event/calendarList.do?menuKey=154'
+          probe 'MICE365' 'https://www.mice365.com/exhibitions'
+          probe 'VELOG' 'https://cache.velcdn.com/api/trending-posts?timeframe=week'
+          echo '--- JOCODING CHANNEL'
+          curl -L --max-time 25 -A 'Mozilla/5.0 DevFeedDiag/1.0' -sS 'https://www.youtube.com/@jocoding' -o /tmp/y || true
+          echo "YOUTUBE SIZE:$(wc -c </tmp/y)"
+          grep -o '"channelId":"UC[^"]*"' /tmp/y | head -n 3 || true
