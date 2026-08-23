@@ -1,0 +1,74 @@
+name: DevFeed APK Temporary Build
+
+on:
+  pull_request:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  build-apk:
+    if: github.head_ref == 'devfeed-apk-build'
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+
+    steps:
+      - name: Checkout PR source
+        uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Set up Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Restore DevFeed source
+        shell: bash
+        run: |
+          set -euxo pipefail
+          rm -rf devfeed-build/src
+          mkdir -p devfeed-build/src
+          base64 -d devfeed-build/devfeed-apk-source.b64 > devfeed-build/devfeed-apk-source.zip
+          unzip -q devfeed-build/devfeed-apk-source.zip -d devfeed-build/src
+          test -f devfeed-build/src/mobile/package.json
+
+      - name: Install dependencies
+        working-directory: devfeed-build/src/mobile
+        run: npm install --no-audit --no-fund
+
+      - name: Typecheck
+        working-directory: devfeed-build/src/mobile
+        run: npm run typecheck
+
+      - name: Generate Android project
+        working-directory: devfeed-build/src/mobile
+        run: npx expo prebuild --platform android --non-interactive --clean
+
+      - name: Build debug APK
+        working-directory: devfeed-build/src/mobile/android
+        run: |
+          chmod +x gradlew
+          ./gradlew assembleDebug --no-daemon --stacktrace
+
+      - name: Collect APK
+        shell: bash
+        run: |
+          set -euxo pipefail
+          mkdir -p devfeed-build/output
+          cp devfeed-build/src/mobile/android/app/build/outputs/apk/debug/app-debug.apk devfeed-build/output/DevFeed-v1.0.1-debug.apk
+          ls -lh devfeed-build/output/DevFeed-v1.0.1-debug.apk
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: DevFeed-APK
+          path: devfeed-build/output/DevFeed-v1.0.1-debug.apk
+          if-no-files-found: error
+          retention-days: 7
