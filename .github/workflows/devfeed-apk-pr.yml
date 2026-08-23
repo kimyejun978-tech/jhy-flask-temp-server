@@ -29,13 +29,17 @@ jobs:
           distribution: temurin
           java-version: '17'
 
-      - name: Restore DevFeed source
+      - name: Restore and verify DevFeed source
         shell: bash
         run: |
           set -euxo pipefail
           rm -rf devfeed-build/src
           mkdir -p devfeed-build/src
+          cat devfeed-build/source.part-* > devfeed-build/devfeed-apk-source.b64
+          test "$(wc -c < devfeed-build/devfeed-apk-source.b64)" -eq 25776
+          echo "eee78698b94ca85a8ba25ecc0bbf7a164265cd686861cc0acfcb92aeb58df086  devfeed-build/devfeed-apk-source.b64" | sha256sum -c -
           base64 -d devfeed-build/devfeed-apk-source.b64 > devfeed-build/devfeed-apk-source.zip
+          unzip -tq devfeed-build/devfeed-apk-source.zip
           unzip -q devfeed-build/devfeed-apk-source.zip -d devfeed-build/src
           test -f devfeed-build/src/mobile/package.json
 
