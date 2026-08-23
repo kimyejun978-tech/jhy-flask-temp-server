@@ -4,9 +4,10 @@ on:
   pull_request:
     branches:
       - main
+    types: [opened, synchronize, reopened, ready_for_review]
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   build-apk:
@@ -16,6 +17,8 @@ jobs:
     steps:
       - name: Checkout PR branch
         uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.ref }}
 
       - name: Set up Node
         uses: actions/setup-node@v4
@@ -63,10 +66,19 @@ jobs:
           cp devfeed-build/src/mobile/android/app/build/outputs/apk/debug/app-debug.apk devfeed-build/output/DevFeed-v1.0.1-debug.apk
           ls -lh devfeed-build/output/DevFeed-v1.0.1-debug.apk
 
-      - name: Upload APK
+      - name: Upload APK artifact
         uses: actions/upload-artifact@v4
         with:
           name: DevFeed-APK
           path: devfeed-build/output/DevFeed-v1.0.1-debug.apk
           if-no-files-found: error
           retention-days: 7
+
+      - name: Commit APK to build branch
+        shell: bash
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -f devfeed-build/output/DevFeed-v1.0.1-debug.apk
+          git commit -m 'Build DevFeed APK [skip ci]' || exit 0
+          git push origin HEAD:${{ github.event.pull_request.head.ref }}
