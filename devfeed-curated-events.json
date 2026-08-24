@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updatedAt": "2026-08-24T19:51:40+09:00",
+  "updatedAt": "2026-08-24T21:48:06+09:00",
   "events": [
     {
       "title": "2026 K-ICT WEEK in BUSAN",
@@ -211,6 +211,22 @@
       "importance": "HIGH",
       "summary": "행정안전부·부산광역시가 주최하는 대형 안전산업 전시회. 첨단재난안전산업존에서 AI·로봇·드론 기반 재난안전 솔루션을 전시하고, ETRI의 합성데이터·AI 예측모델 고도화 워크숍 등 관련 세미나도 함께 열린다.",
       "sourceUrl": "https://www.k-safetyexpo.kr/sub01/sub01.php"
+    },
+    {
+      "title": "2026 생성형 AI 위험성 발굴 경진대회 — 시즌2",
+      "categories": ["생성형 AI", "AI 안전", "경진대회"],
+      "startDate": "2026-08-14",
+      "endDate": "2026-09-04",
+      "dateText": "시즌2 2026년 8월 14일 ~ 9월 4일",
+      "datePrecision": "EXACT",
+      "deadline": "2026-09-04",
+      "location": "온라인",
+      "isOnline": true,
+      "fee": null,
+      "highSchoolAllowed": true,
+      "importance": "HIGH",
+      "summary": "생성형 AI를 사용하며 발견한 오정보·폭력 등 위험 사례를 제보하고 위험성과 피해 심각성을 평가받는 전 국민 대상 AI 안전 경진대회. 우수 사례에는 한국정보통신진흥협회 협회장상과 갤럭시 탭 S11·갤럭시 버즈4 등의 부상이 제공된다.",
+      "sourceUrl": "https://ai.wiseuser.go.kr/event/index.do"
     }
   ]
 }
