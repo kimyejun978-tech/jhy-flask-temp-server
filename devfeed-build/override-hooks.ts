@@ -55,5 +55,18 @@ export function useSavePreferences(){ const qc=useQueryClient(); return useMutat
 
 export function useTrends() { return useQuery({ queryKey: ['trends'], queryFn: () => api<{items: TrendItem[]}>('/v1/trends') }); }
 export function useTrend(id: string) { return useQuery({ queryKey:['trend', id], queryFn: () => api<TrendItem>(`/v1/trends/${id}`), enabled: !!id }); }
-export function useNews() { return useQuery({ queryKey:['news'], queryFn: () => api<{items: NewsItem[]}>('/v1/ai-news') }); }
-export function useNewsItem(id: string) { return useQuery({ queryKey:['news', id], queryFn: () => api<NewsItem>(`/v1/ai-news/${id}`), enabled: !!id }); }
+export function useNews() {
+  return useQuery({
+    queryKey:['news'],
+    queryFn: () => api<{items: NewsItem[]}>('/v1/ai-news'),
+    refetchInterval: (query) => query.state.data?.items.some((item) => !item.summary) ? 30000 : false,
+  });
+}
+export function useNewsItem(id: string) {
+  return useQuery({
+    queryKey:['news', id],
+    queryFn: () => api<NewsItem>(`/v1/ai-news/${id}`),
+    enabled: !!id,
+    refetchInterval: (query) => query.state.data?.summary ? false : 10000,
+  });
+}
