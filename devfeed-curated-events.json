@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updatedAt": "2026-08-24T13:45:22+09:00",
+  "updatedAt": "2026-08-24T18:38:30+09:00",
   "events": [
     {
       "title": "2026 K-ICT WEEK in BUSAN",
@@ -183,6 +183,20 @@
       "importance": "HIGH",
       "summary": "AI·데이터 등 디지털 기술로 대국민 공공서비스, 지역·사회문제, 공공인프라를 혁신하는 GovTech 아이디어·제품·서비스 경진대회. 예비창업자는 아이디어 기획 또는 제품·서비스 개발 트랙에 참가할 수 있고, 총 14개작을 선정하며 총상금 7,000만 원과 교육·멘토링·부트캠프를 지원한다.",
       "sourceUrl": "https://k-govtech.kr/"
+    },
+    {
+      "title": "2026년 제2회 성남×KAIST AI 경진대회",
+      "categories": ["AI", "소프트웨어", "지역사회 문제 해결", "경진대회"],
+      "startDate": "2026-08-12",
+      "endDate": "2026-10-24",
+      "deadline": "2026-09-18",
+      "location": null,
+      "isOnline": false,
+      "fee": null,
+      "highSchoolAllowed": true,
+      "importance": "HIGH",
+      "summary": "전국 고등학생이 개인 또는 1~4인 팀으로 참가해 AI로 지역사회 문제를 정의하고 해결안을 기획·제안하거나 구현하는 대회. 학생부는 예선 서면평가 후 본선 현장 발표·시연을 진행하며 대상·최우수상에 KAIST 총장상이 수여된다.",
+      "sourceUrl": "https://xai.kaist.ac.kr/ai-contest/2026/"
     }
   ]
 }
