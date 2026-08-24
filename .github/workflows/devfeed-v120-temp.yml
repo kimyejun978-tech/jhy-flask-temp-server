@@ -1,0 +1,147 @@
+name: DevFeed v1.2.0 Calendar Release APK
+
+on:
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  build-v120:
+    if: github.head_ref == 'devfeed-v120-release'
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+
+    steps:
+      - name: Checkout build branch
+        uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Set up Java 17
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Restore DevFeed source and v1.2 overrides
+        shell: bash
+        run: |
+          set -euxo pipefail
+          rm -rf devfeed-build/src devfeed-build/v106
+          mkdir -p devfeed-build/src devfeed-build/v106
+          cat devfeed-build/source.part-* > devfeed-build/devfeed-apk-source.b64
+          test "$(wc -c < devfeed-build/devfeed-apk-source.b64)" -eq 25776
+          echo "eee78698b94ca85a8ba25ecc0bbf7a164265cd686861cc0acfcb92aeb58df086  devfeed-build/devfeed-apk-source.b64" | sha256sum -c -
+          base64 -d devfeed-build/devfeed-apk-source.b64 > devfeed-build/devfeed-apk-source.zip
+          unzip -tq devfeed-build/devfeed-apk-source.zip
+          unzip -q devfeed-build/devfeed-apk-source.zip -d devfeed-build/src
+          unzip -tq devfeed-build/v106-overrides.zip
+          unzip -q devfeed-build/v106-overrides.zip -d devfeed-build/v106
+          cp devfeed-build/v110/override-client.ts devfeed-build/src/mobile/src/api/client.ts
+          cp devfeed-build/override-tabs-layout.tsx 'devfeed-build/src/mobile/app/(tabs)/_layout.tsx'
+          cp devfeed-build/override-hooks.ts devfeed-build/src/mobile/src/api/hooks.ts
+          cp devfeed-build/v110/override-settings.tsx devfeed-build/src/mobile/app/settings.tsx
+          cp devfeed-build/v120/override-events-index.tsx 'devfeed-build/src/mobile/app/(tabs)/index.tsx'
+          cp devfeed-build/v120/override-event-detail.tsx 'devfeed-build/src/mobile/app/event/[id].tsx'
+          cp devfeed-build/v120/override-root-layout.tsx devfeed-build/src/mobile/app/_layout.tsx
+          cp devfeed-build/v120/override-calendar-screen.tsx devfeed-build/src/mobile/app/calendar.tsx
+          cp devfeed-build/v120/calendar.ts devfeed-build/src/mobile/src/calendar.ts
+          cp devfeed-build/v120/override-app.json devfeed-build/src/mobile/app.json
+
+      - name: Install dependencies
+        working-directory: devfeed-build/src/mobile
+        run: |
+          npm install --no-audit --no-fund
+          npx expo install expo-application expo-calendar
+
+      - name: Typecheck
+        working-directory: devfeed-build/src/mobile
+        run: npm run typecheck
+
+      - name: Generate Android project
+        working-directory: devfeed-build/src/mobile
+        run: npx expo prebuild --platform android --non-interactive --clean
+
+      - name: Install widget and per-device background notifications
+        shell: bash
+        run: |
+          set -euxo pipefail
+          ROOT='devfeed-build/src/mobile/android/app/src/main'
+          JAVA="$ROOT/java/app/devfeed/mobile"
+          mkdir -p "$JAVA" "$ROOT/res/layout" "$ROOT/res/drawable" "$ROOT/res/xml"
+          cp devfeed-build/v106/DevFeedWidgetProvider.java "$JAVA/"
+          cp devfeed-build/v106/DevFeedNotificationJobService.java "$JAVA/"
+          cp devfeed-build/v106/DevFeedNotificationScheduler.java "$JAVA/"
+          cp devfeed-build/v106/DevFeedInitProvider.java "$JAVA/"
+          cp devfeed-build/v106/DevFeedBootReceiver.java "$JAVA/"
+          cp devfeed-build/v106/devfeed_widget.xml "$ROOT/res/layout/devfeed_widget.xml"
+          cp devfeed-build/v106/devfeed_widget_bg.xml "$ROOT/res/drawable/devfeed_widget_bg.xml"
+          cp devfeed-build/v106/devfeed_widget_event_bg.xml "$ROOT/res/drawable/devfeed_widget_event_bg.xml"
+          cp devfeed-build/v106/devfeed_widget_pill.xml "$ROOT/res/drawable/devfeed_widget_pill.xml"
+          cp devfeed-build/v106/devfeed_widget_deadline.xml "$ROOT/res/drawable/devfeed_widget_deadline.xml"
+          cp devfeed-build/v106/devfeed_widget_info.xml "$ROOT/res/xml/devfeed_widget_info.xml"
+          python3 - <<'PY'
+          from pathlib import Path
+          java=Path('devfeed-build/src/mobile/android/app/src/main/java/app/devfeed/mobile/DevFeedNotificationJobService.java')
+          s=java.read_text(encoding='utf-8')
+          if 'import android.provider.Settings;' not in s:
+              s=s.replace('import android.os.Build;\n','import android.os.Build;\nimport android.provider.Settings;\n')
+          s=s.replace('c.setRequestProperty("x-user-id", "local-default");','c.setRequestProperty("x-user-id", deviceUserId());')
+          marker='    private JSONArray getItems(String path) throws Exception {'
+          if 'private String deviceUserId()' not in s:
+              s=s.replace(marker,'    private String deviceUserId() { String id = Settings.Secure.getString(getContentResolver(), Settings.Secure.ANDROID_ID); return "android-" + (id == null ? "unknown" : id); }\n\n'+marker)
+          java.write_text(s,encoding='utf-8')
+
+          p=Path('devfeed-build/src/mobile/android/app/src/main/AndroidManifest.xml')
+          s=p.read_text(encoding='utf-8')
+          if 'android.permission.RECEIVE_BOOT_COMPLETED' not in s:
+              s=s.replace('<application', '<uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />\n  <application', 1)
+          if 'android.permission.POST_NOTIFICATIONS' not in s:
+              s=s.replace('<application', '<uses-permission android:name="android.permission.POST_NOTIFICATIONS" />\n  <application', 1)
+          components='''
+              <receiver android:name=".DevFeedWidgetProvider" android:exported="true">
+                  <intent-filter><action android:name="android.appwidget.action.APPWIDGET_UPDATE" /></intent-filter>
+                  <meta-data android:name="android.appwidget.provider" android:resource="@xml/devfeed_widget_info" />
+              </receiver>
+              <service android:name=".DevFeedNotificationJobService" android:permission="android.permission.BIND_JOB_SERVICE" android:exported="true" />
+              <receiver android:name=".DevFeedBootReceiver" android:enabled="true" android:exported="true">
+                  <intent-filter><action android:name="android.intent.action.BOOT_COMPLETED" /></intent-filter>
+              </receiver>
+              <provider android:name=".DevFeedInitProvider" android:authorities="${applicationId}.devfeed-init" android:exported="false" android:initOrder="100" />
+          '''
+          if 'DevFeedNotificationJobService' not in s:
+              s=s.replace('</application>', components + '\n  </application>')
+          p.write_text(s, encoding='utf-8')
+          PY
+          grep -n 'READ_CALENDAR\|WRITE_CALENDAR\|DevFeedNotificationJobService\|DevFeedWidgetProvider' "$ROOT/AndroidManifest.xml"
+
+      - name: Build standalone release APK
+        working-directory: devfeed-build/src/mobile/android
+        run: |
+          chmod +x gradlew
+          ./gradlew assembleRelease --no-daemon --stacktrace
+
+      - name: Verify and collect APK
+        shell: bash
+        run: |
+          set -euxo pipefail
+          APK='devfeed-build/src/mobile/android/app/build/outputs/apk/release/app-release.apk'
+          test -f "$APK"
+          unzip -l "$APK" | grep -E 'assets/index.android.bundle|assets/.*\.bundle'
+          mkdir -p devfeed-build/output
+          cp "$APK" devfeed-build/output/DevFeed-v1.2.0-calendar-release.apk
+          sha256sum devfeed-build/output/DevFeed-v1.2.0-calendar-release.apk
+          ls -lh devfeed-build/output/DevFeed-v1.2.0-calendar-release.apk
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: DevFeed-v1.2.0-Calendar-Release-APK
+          path: devfeed-build/output/DevFeed-v1.2.0-calendar-release.apk
+          if-no-files-found: error
+          retention-days: 7
