@@ -3,11 +3,16 @@ import { Alert, Linking, Text, View } from 'react-native';
 import { Badge, Button, Card, ErrorBox, Loading, Page, ui } from '@/components/Ui';
 import { useEvent, useSetEventStatus } from '@/api/hooks';
 import { colors } from '@/theme';
-import { addDeadlineWithSystemForm, addEventWithSystemForm, findConflictsForEvent } from '@/calendar';
+import { addDeadlineWithSystemForm, addEventWithSystemForm, describeEventTiming, findConflictsForEvent, isDateOnlyValue, type EventConflict } from '@/calendar';
 
-function conflictText(conflicts:{item:{title:string};minutes:number}[]){
-  const top=conflicts.slice(0,3).map(x=>`• ${x.item.title} · ${x.minutes>=60?`${Math.floor(x.minutes/60)}시간${x.minutes%60?` ${x.minutes%60}분`:''}`:`${x.minutes}분`} 겹침`).join('\n');
-  return `기존 캘린더 일정과 겹칩니다.\n\n${top}${conflicts.length>3?`\n외 ${conflicts.length-3}개`:''}`;
+function conflictText(conflicts:EventConflict[]){
+  const top=conflicts.slice(0,3).map(x=>x.approximate?`• ${x.item.title} · 같은 기간에 일정 있음`:`• ${x.item.title} · ${x.minutes>=60?`${Math.floor(x.minutes/60)}시간${x.minutes%60?` ${x.minutes%60}분`:''}`:`${x.minutes}분`} 겹침`).join('\n');
+  const hasApprox=conflicts.some(x=>x.approximate);
+  return `기존 캘린더 일정과 겹칩니다.\n\n${top}${conflicts.length>3?`\n외 ${conflicts.length-3}개`:''}${hasApprox?'\n\n※ 행사 시간이 정확히 공개되지 않은 일정은 시간 수치 대신 같은 기간 여부만 표시합니다.':''}`;
+}
+function deadlineText(value:string){
+  if(isDateOnlyValue(value))return new Date(`${value.slice(0,10)}T12:00:00`).toLocaleDateString('ko-KR');
+  const d=new Date(value);return Number.isNaN(d.getTime())?'마감일 확인 필요':d.toLocaleString('ko-KR');
 }
 
 export default function EventDetail(){
@@ -39,14 +44,14 @@ export default function EventDetail(){
     <Text style={{color:colors.text,fontSize:28,fontWeight:'900'}}>{e.title}</Text>
     <View style={ui.row}>{e.categories.map(c=><Badge key={c}>{c}</Badge>)}</View>
     <Card>
-      <Text style={ui.body}>📅 {e.startDate?new Date(e.startDate).toLocaleString('ko-KR'):'일정 확인 필요'}</Text>
+      <Text style={ui.body}>📅 {describeEventTiming(e)}</Text>
       <Text style={ui.body}>📍 {e.isOnline?'온라인':e.location??'장소 확인 필요'}</Text>
-      {e.deadline?<Text style={ui.body}>⏰ 신청 마감 {new Date(e.deadline).toLocaleString('ko-KR')}</Text>:null}
+      {e.deadline?<Text style={ui.body}>⏰ 신청 마감 {deadlineText(e.deadline)}</Text>:null}
       <Text style={ui.body}>💰 {e.fee===0?'무료':e.fee==null?'참가비 확인 필요':`${e.fee.toLocaleString()}원`}</Text>
       <Text style={ui.body}>🎓 {e.highSchoolAllowed===true?'고등학생 참가 가능':e.highSchoolAllowed===false?'고등학생 참가 불가':'고등학생 참가 여부 확인 필요'}</Text>
     </Card>
     {e.summary&&<Card><Text style={ui.h2}>행사 소개</Text><Text style={ui.body}>{e.summary}</Text></Card>}
-    <Card><Text style={ui.h2}>일정 충돌</Text><Text style={ui.muted}>휴대폰에 동기화된 캘린더와 이 행사 시간을 기기 안에서만 비교합니다.</Text><Button label="기존 일정과 겹치는지 확인" variant="ghost" onPress={()=>void check()}/></Card>
+    <Card><Text style={ui.h2}>일정 충돌</Text><Text style={ui.muted}>휴대폰에 동기화된 캘린더와 이 행사 시간을 기기 안에서만 비교합니다. 시간이 없는 장기 일정은 과장된 시간 수치 대신 같은 기간 여부만 알려줍니다.</Text><Button label="기존 일정과 겹치는지 확인" variant="ghost" onPress={()=>void check()}/></Card>
     <Button label="공식 홈페이지" variant="ghost" onPress={()=>Linking.openURL(e.sourceUrl)}/>
     <View style={{gap:8}}><Button label="☆ 관심있음" variant="ghost" onPress={()=>m.mutate('INTERESTED')}/><Button label="참가할래" onPress={()=>void planning()}/><Button label="신청 완료" variant="ghost" onPress={()=>m.mutate('APPLIED')}/></View>
     <Card><Text style={ui.h2}>캘린더</Text><Text style={ui.muted}>일정 내용을 채운 뒤 휴대폰의 캘린더 작성 화면을 엽니다.</Text><View style={{gap:8,paddingTop:8}}><Button label="행사 일정 추가" variant="ghost" onPress={()=>void calendarAdd('event')}/>{e.deadline&&<Button label="신청 마감 추가" variant="ghost" onPress={()=>void calendarAdd('deadline')}/>}<Button label="일정 탭 보기" variant="ghost" onPress={()=>router.push('/schedule')}/></View></Card>
