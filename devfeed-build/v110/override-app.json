@@ -1,0 +1,14 @@
+{
+  "expo": {
+    "name": "DevFeed",
+    "slug": "devfeed",
+    "version": "1.1.0",
+    "orientation": "portrait",
+    "scheme": "devfeed",
+    "userInterfaceStyle": "automatic",
+    "newArchEnabled": true,
+    "plugins": ["expo-router", "expo-notifications", "expo-calendar"],
+    "android": {"package": "app.devfeed.mobile", "versionCode": 7},
+    "ios": {"bundleIdentifier": "app.devfeed.mobile"}
+  }
+}
