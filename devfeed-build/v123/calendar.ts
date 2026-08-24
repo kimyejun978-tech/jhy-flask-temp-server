@@ -17,11 +17,98 @@ export type CalendarSnapshot={
   failedCalendarCount:number;
 };
 
+export type EventTiming={
+  start:Date;
+  end:Date;
+  displayEnd:Date;
+  allDayLike:boolean;
+  multiDay:boolean;
+  precise:boolean;
+  durationDays:number;
+};
+
+export type EventConflict={
+  item:DeviceCalendarEvent;
+  minutes:number;
+  approximate:boolean;
+};
+
 function toIso(value:unknown):string|null{
   try{
     const d=value instanceof Date?value:new Date(String(value));
     return Number.isNaN(d.getTime())?null:d.toISOString();
   }catch{return null;}
+}
+
+function dateOnlyParts(value:string|null|undefined){
+  if(!value)return null;
+  const raw=String(value).trim();
+  const m=raw.match(/^(\d{4})-(\d{2})-(\d{2})(?:T00:00:00(?:\.000)?(?:Z|\+00:00))?$/);
+  if(!m)return null;
+  return {y:Number(m[1]),m:Number(m[2])-1,d:Number(m[3])};
+}
+
+export function isDateOnlyValue(value:string|null|undefined){return Boolean(dateOnlyParts(value));}
+
+function parseSourceDate(value:string):Date{
+  const p=dateOnlyParts(value);
+  if(p)return new Date(p.y,p.m,p.d,0,0,0,0);
+  return new Date(value);
+}
+
+function nextLocalDay(d:Date){return new Date(d.getFullYear(),d.getMonth(),d.getDate()+1,0,0,0,0);}
+function sameLocalDay(a:Date,b:Date){return a.getFullYear()===b.getFullYear()&&a.getMonth()===b.getMonth()&&a.getDate()===b.getDate();}
+function formatDate(d:Date){return d.toLocaleDateString('ko-KR',{month:'long',day:'numeric'});}
+function formatDateTime(d:Date){return d.toLocaleString('ko-KR',{month:'numeric',day:'numeric',hour:'2-digit',minute:'2-digit',hour12:false});}
+
+export function getEventTiming(event:EventItem):EventTiming|null{
+  if(!event.startDate)return null;
+  const start=parseSourceDate(event.startDate);
+  if(Number.isNaN(start.getTime()))return null;
+
+  const startAllDay=isDateOnlyValue(event.startDate);
+  const endAllDay=event.endDate?isDateOnlyValue(event.endDate):startAllDay;
+
+  if(startAllDay){
+    let displayEnd=event.endDate?parseSourceDate(event.endDate):start;
+    if(Number.isNaN(displayEnd.getTime())||displayEnd<start)displayEnd=start;
+    const end=nextLocalDay(displayEnd);
+    const durationDays=Math.max(1,Math.round((new Date(displayEnd.getFullYear(),displayEnd.getMonth(),displayEnd.getDate()).getTime()-new Date(start.getFullYear(),start.getMonth(),start.getDate()).getTime())/86400000)+1);
+    return {start,end,displayEnd,allDayLike:true,multiDay:durationDays>1,precise:false,durationDays};
+  }
+
+  let end=event.endDate?parseSourceDate(event.endDate):new Date(start.getTime()+2*60*60*1000);
+  if(Number.isNaN(end.getTime())||end<=start)end=new Date(start.getTime()+2*60*60*1000);
+  const durationMs=end.getTime()-start.getTime();
+  const multiDay=!sameLocalDay(start,end)||durationMs>24*60*60*1000;
+  const precise=!endAllDay&&durationMs<=24*60*60*1000;
+  const durationDays=Math.max(1,Math.ceil(durationMs/86400000));
+  return {start,end,displayEnd:end,allDayLike:false,multiDay,precise,durationDays};
+}
+
+export function describeEventTiming(event:EventItem){
+  const t=getEventTiming(event);
+  if(!t)return '일정 확인 필요';
+  if(t.allDayLike){
+    if(t.multiDay)return `${formatDate(t.start)} ~ ${formatDate(t.displayEnd)} · 기간 일정`;
+    return `${formatDate(t.start)} · 하루 종일`;
+  }
+  if(t.precise)return `${formatDateTime(t.start)} ~ ${t.end.toLocaleTimeString('ko-KR',{hour:'2-digit',minute:'2-digit',hour12:false})}`;
+  return `${formatDateTime(t.start)} ~ ${formatDateTime(t.end)} · 기간 일정`;
+}
+
+function normalizeTitle(value:string){return value.toLowerCase().replace(/[^0-9a-z가-힣]+/gi,'');}
+
+export function isLikelySameEvent(event:EventItem,item:DeviceCalendarEvent){
+  const a=normalizeTitle(event.title||'');
+  const b=normalizeTitle(item.title||'');
+  if(!a||a!==b)return false;
+  const timing=getEventTiming(event);
+  if(!timing)return false;
+  const deviceStart=new Date(item.startDate);
+  if(Number.isNaN(deviceStart.getTime()))return false;
+  if(timing.allDayLike)return sameLocalDay(timing.start,deviceStart);
+  return Math.abs(timing.start.getTime()-deviceStart.getTime())<=6*60*60*1000;
 }
 
 export async function hasCalendarPermission(requestIfNeeded=false):Promise<boolean>{
@@ -78,45 +165,44 @@ export async function loadDeviceCalendarEvents(start:Date,end:Date,requestIfNeed
   return (await loadDeviceCalendarSnapshot(start,end,requestIfNeeded)).events;
 }
 
-function rangeForEvent(event:EventItem){
-  if(!event.startDate)return null;
-  const start=new Date(event.startDate);
-  if(Number.isNaN(start.getTime()))return null;
-  const rawEnd=event.endDate?new Date(event.endDate):new Date(start.getTime()+2*60*60*1000);
-  const end=Number.isNaN(rawEnd.getTime())?new Date(start.getTime()+2*60*60*1000):rawEnd;
-  return {start,end:end>start?end:new Date(start.getTime()+30*60*1000)};
-}
-
 export function overlapMinutes(aStart:Date,aEnd:Date,bStart:Date,bEnd:Date):number{
   const start=Math.max(aStart.getTime(),bStart.getTime());
   const end=Math.min(aEnd.getTime(),bEnd.getTime());
   return Math.max(0,Math.round((end-start)/60000));
 }
 
-export function conflictsWithEvent(event:EventItem,deviceEvents:DeviceCalendarEvent[]){
-  const range=rangeForEvent(event);
-  if(!range)return [];
-  return deviceEvents.map(item=>({item,minutes:overlapMinutes(range.start,range.end,new Date(item.startDate),new Date(item.endDate))}))
-    .filter(x=>x.minutes>0)
-    .sort((a,b)=>b.minutes-a.minutes);
+export function conflictsWithEvent(event:EventItem,deviceEvents:DeviceCalendarEvent[]):EventConflict[]{
+  const timing=getEventTiming(event);
+  if(!timing)return [];
+  const result:EventConflict[]=[];
+  for(const item of deviceEvents){
+    if(isLikelySameEvent(event,item))continue;
+    const bStart=new Date(item.startDate);const bEnd=new Date(item.endDate);
+    if(Number.isNaN(bStart.getTime())||Number.isNaN(bEnd.getTime()))continue;
+    const overlap=overlapMinutes(timing.start,timing.end,bStart,bEnd);
+    if(overlap<=0)continue;
+    if(timing.precise)result.push({item,minutes:overlap,approximate:false});
+    else result.push({item,minutes:0,approximate:true});
+  }
+  return result.sort((a,b)=>Number(a.approximate)-Number(b.approximate)||b.minutes-a.minutes);
 }
 
 export async function findConflictsForEvent(event:EventItem,requestIfNeeded=false){
-  const range=rangeForEvent(event);
-  if(!range)return [];
+  const timing=getEventTiming(event);
+  if(!timing)return [];
   const margin=24*60*60*1000;
-  const device=await loadDeviceCalendarEvents(new Date(range.start.getTime()-margin),new Date(range.end.getTime()+margin),requestIfNeeded);
+  const device=await loadDeviceCalendarEvents(new Date(timing.start.getTime()-margin),new Date(timing.end.getTime()+margin),requestIfNeeded);
   return conflictsWithEvent(event,device);
 }
 
 export async function addEventWithSystemForm(event:EventItem){
-  if(!event.startDate)throw new Error('행사 날짜가 확인되지 않았습니다.');
-  const range=rangeForEvent(event);
-  if(!range)throw new Error('행사 날짜 형식을 확인하지 못했습니다.');
+  const timing=getEventTiming(event);
+  if(!timing)throw new Error('행사 날짜를 확인하지 못했습니다.');
   return Calendar.createEventInCalendarAsync({
     title:event.title,
-    startDate:range.start,
-    endDate:range.end,
+    startDate:timing.start,
+    endDate:timing.end,
+    allDay:timing.allDayLike,
     location:event.isOnline?'온라인':(event.location??''),
     notes:[event.summary??'','','DevFeed에서 추가한 일정',event.sourceUrl].filter(Boolean).join('\n'),
   });
@@ -124,12 +210,14 @@ export async function addEventWithSystemForm(event:EventItem){
 
 export async function addDeadlineWithSystemForm(event:EventItem){
   if(!event.deadline)throw new Error('공식 신청 마감이 확인되지 않았습니다.');
-  const start=new Date(event.deadline);
+  const allDay=isDateOnlyValue(event.deadline);
+  const start=parseSourceDate(event.deadline);
   if(Number.isNaN(start.getTime()))throw new Error('신청 마감 날짜 형식을 확인하지 못했습니다.');
   return Calendar.createEventInCalendarAsync({
     title:`[신청 마감] ${event.title}`,
     startDate:start,
-    endDate:new Date(start.getTime()+30*60*1000),
+    endDate:allDay?nextLocalDay(start):new Date(start.getTime()+30*60*1000),
+    allDay,
     location:event.isOnline?'온라인':(event.location??''),
     notes:[event.summary??'','','DevFeed에서 추가한 신청 마감',event.sourceUrl].filter(Boolean).join('\n'),
   });
