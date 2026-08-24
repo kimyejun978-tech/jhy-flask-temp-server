@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updatedAt": "2026-08-24T18:38:30+09:00",
+  "updatedAt": "2026-08-24T19:51:40+09:00",
   "events": [
     {
       "title": "2026 K-ICT WEEK in BUSAN",
@@ -197,6 +197,20 @@
       "importance": "HIGH",
       "summary": "전국 고등학생이 개인 또는 1~4인 팀으로 참가해 AI로 지역사회 문제를 정의하고 해결안을 기획·제안하거나 구현하는 대회. 학생부는 예선 서면평가 후 본선 현장 발표·시연을 진행하며 대상·최우수상에 KAIST 총장상이 수여된다.",
       "sourceUrl": "https://xai.kaist.ac.kr/ai-contest/2026/"
+    },
+    {
+      "title": "2026 대한민국 안전산업박람회",
+      "categories": ["AI", "로봇", "드론", "디지털트윈", "재난안전", "전시회"],
+      "startDate": "2026-09-02",
+      "endDate": "2026-09-04",
+      "deadline": "2026-08-31",
+      "location": "부산 BEXCO 제1전시장",
+      "isOnline": false,
+      "fee": null,
+      "highSchoolAllowed": null,
+      "importance": "HIGH",
+      "summary": "행정안전부·부산광역시가 주최하는 대형 안전산업 전시회. 첨단재난안전산업존에서 AI·로봇·드론 기반 재난안전 솔루션을 전시하고, ETRI의 합성데이터·AI 예측모델 고도화 워크숍 등 관련 세미나도 함께 열린다.",
+      "sourceUrl": "https://www.k-safetyexpo.kr/sub01/sub01.php"
     }
   ]
 }
