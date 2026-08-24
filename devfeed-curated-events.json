@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updatedAt": "2026-08-24T23:48:55+09:00",
+  "updatedAt": "2026-08-25T01:43:11+09:00",
   "events": [
     {
       "title": "2026 K-ICT WEEK in BUSAN",
@@ -243,6 +243,22 @@
       "importance": "HIGH",
       "summary": "무신사 테크의 첫 테크 컨퍼런스. AI를 데모가 아니라 실제 프로덕션에 운영한 경험을 중심으로 Harness Engineering, AI-native 개발, Figma-to-code, 코드 지식그래프, 검증 자동화 등 실전 사례를 공유한다. 만 14세 이상이면 직군과 관계없이 신청 가능하며 참석은 무료다.",
       "sourceUrl": "https://pattern.musinsa.com/"
+    },
+    {
+      "title": "제3회 미래융합인재 발굴 소프트웨어 챌린지 — 고등부",
+      "categories": ["AI", "소프트웨어", "피지컬 AI", "로보틱스", "온디바이스 AI", "사이버보안", "경진대회"],
+      "startDate": "2026-10-27",
+      "endDate": "2026-10-27",
+      "dateText": "고등부 본선·시상: 2026년 10월 27일",
+      "datePrecision": "EXACT",
+      "deadline": "2026-10-07",
+      "location": "경북 경산 · 경산이노베이션아카데미",
+      "isOnline": false,
+      "fee": null,
+      "highSchoolAllowed": true,
+      "importance": "HIGH",
+      "summary": "고등학생 3~5명이 팀을 이뤄 피지컬 AI·로보틱스 SW, AI·빅데이터, 온디바이스 AI·모바일/웹, 사이버보안 또는 자유주제로 아이디어와 개발 결과를 겨루는 대회. 10월 14일 서류평가로 고등부 10팀을 선발해 10월 27일 현장 본선·시상을 진행한다.",
+      "sourceUrl": "https://gsia-sw.kr/"
     }
   ]
 }
