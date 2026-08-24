@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updatedAt": "2026-08-24T21:48:06+09:00",
+  "updatedAt": "2026-08-24T23:48:55+09:00",
   "events": [
     {
       "title": "2026 K-ICT WEEK in BUSAN",
@@ -227,6 +227,22 @@
       "importance": "HIGH",
       "summary": "생성형 AI를 사용하며 발견한 오정보·폭력 등 위험 사례를 제보하고 위험성과 피해 심각성을 평가받는 전 국민 대상 AI 안전 경진대회. 우수 사례에는 한국정보통신진흥협회 협회장상과 갤럭시 탭 S11·갤럭시 버즈4 등의 부상이 제공된다.",
       "sourceUrl": "https://ai.wiseuser.go.kr/event/index.do"
+    },
+    {
+      "title": "MUSINSA PATTERN ’26 Tech Conference",
+      "categories": ["AI", "소프트웨어", "AI Native", "개발자 행사", "테크 컨퍼런스"],
+      "startDate": "2026-09-18T10:00:00+09:00",
+      "endDate": "2026-09-18T17:30:00+09:00",
+      "dateText": "2026년 9월 18일 10:00~17:30",
+      "datePrecision": "EXACT",
+      "deadline": "2026-08-31",
+      "location": "서울 본다빈치뮤지엄 (광진구 광나루로 441)",
+      "isOnline": false,
+      "fee": 0,
+      "highSchoolAllowed": true,
+      "importance": "HIGH",
+      "summary": "무신사 테크의 첫 테크 컨퍼런스. AI를 데모가 아니라 실제 프로덕션에 운영한 경험을 중심으로 Harness Engineering, AI-native 개발, Figma-to-code, 코드 지식그래프, 검증 자동화 등 실전 사례를 공유한다. 만 14세 이상이면 직군과 관계없이 신청 가능하며 참석은 무료다.",
+      "sourceUrl": "https://pattern.musinsa.com/"
     }
   ]
 }
