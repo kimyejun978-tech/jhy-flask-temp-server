@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updatedAt": "2026-08-24T08:53:00+09:00",
+  "updatedAt": "2026-08-24T12:42:00+09:00",
   "events": [
     {
       "title": "2026 K-ICT WEEK in BUSAN",
@@ -155,6 +155,20 @@
       "importance": "HIGH",
       "summary": "만 15세 이상 국민이 개인 또는 최대 4인 팀으로 참가해 개인·지역·사회 문제를 해결하는 AI 서비스를 개발하는 대회. 바이브코딩 토큰, 클라우드·개발도구·데이터/API와 본선 진출팀 대상 빅테크 코칭·멘토링을 지원하며 총상금은 2,600만 원.",
       "sourceUrl": "https://contest.aitestbed.kr/"
+    },
+    {
+      "title": "2026 디지털새싹 문제해결 경진대회 「2026 C.O.D.E.」",
+      "categories": ["AI", "SW", "디지털", "경진대회"],
+      "startDate": null,
+      "endDate": null,
+      "deadline": "2026-09-07T23:59:00+09:00",
+      "location": null,
+      "isOnline": null,
+      "fee": null,
+      "highSchoolAllowed": true,
+      "importance": "HIGH",
+      "summary": "전국 중·고등학생이 AI·디지털 기술로 사회 문제를 해결하는 실전형 프로젝트 경진대회. 동일 학교 학생 3명과 담당교사 1명으로 팀을 구성하며, 트랙별 15팀씩 총 45팀 내외를 본선에 선발하고 9~11월 멘토링 후 12월 결선을 진행한다.",
+      "sourceUrl": "https://apply.kosac.re.kr/onlnRcpt/getBscInfo.do?pbancNo=2026-S724"
     }
   ]
 }
