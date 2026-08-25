@@ -1,0 +1,1 @@
+DevFeed v1.2.6 release trigger — automatically hide expired/closed events from the event feed.
