@@ -1,4 +1,4 @@
-name: DevFeed v1.2.6 Design Refresh Release
+name: DevFeed v1.2.7 Design Refresh Release
 
 on:
   pull_request:
@@ -8,7 +8,7 @@ permissions:
   contents: write
 
 jobs:
-  build-v126:
+  build-v127:
     if: github.head_ref == 'devfeed-v126-design'
     runs-on: ubuntu-latest
     timeout-minutes: 45
@@ -27,7 +27,7 @@ jobs:
           distribution: temurin
           java-version: '17'
 
-      - name: Restore DevFeed source and v1.2.6 overrides
+      - name: Restore DevFeed source and v1.2.7 overrides
         shell: bash
         run: |
           set -euxo pipefail
@@ -133,15 +133,15 @@ jobs:
           test -f "$APK"
           unzip -l "$APK" | grep -E 'assets/index.android.bundle|assets/.*\.bundle'
           mkdir -p devfeed-build/output
-          cp "$APK" devfeed-build/output/DevFeed-v1.2.6-release.apk
-          sha256sum devfeed-build/output/DevFeed-v1.2.6-release.apk
-          ls -lh devfeed-build/output/DevFeed-v1.2.6-release.apk
+          cp "$APK" devfeed-build/output/DevFeed-v1.2.7-release.apk
+          sha256sum devfeed-build/output/DevFeed-v1.2.7-release.apk
+          ls -lh devfeed-build/output/DevFeed-v1.2.7-release.apk
 
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
         with:
-          name: DevFeed-v1.2.6-Design-Refresh-APK
-          path: devfeed-build/output/DevFeed-v1.2.6-release.apk
+          name: DevFeed-v1.2.7-Design-Refresh-APK
+          path: devfeed-build/output/DevFeed-v1.2.7-release.apk
           if-no-files-found: error
           retention-days: 7
 
@@ -149,12 +149,12 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh release delete v1.2.6 --cleanup-tag -y --repo "$GITHUB_REPOSITORY" 2>/dev/null || true
-          gh release create v1.2.6 devfeed-build/output/DevFeed-v1.2.6-release.apk \
+          gh release delete v1.2.7 --cleanup-tag -y --repo "$GITHUB_REPOSITORY" 2>/dev/null || true
+          gh release create v1.2.7 devfeed-build/output/DevFeed-v1.2.7-release.apk \
             --repo "$GITHUB_REPOSITORY" \
-            --title "DevFeed v1.2.6" \
+            --title "DevFeed v1.2.7" \
             --notes "전체 UI 디자인을 새로 정리했습니다. 공통 다크 디자인 시스템, 카드/버튼/배지, 행사 홈, 개발 트렌드, 하단 탭, 설정 화면을 전면 개선했고 기존 일정·캘린더·인앱 업데이트·알림·AI 뉴스 기능은 유지합니다."
 
       - name: Verify latest release endpoint
         run: |
-          curl -fsSL "https://api.github.com/repos/$GITHUB_REPOSITORY/releases/latest" | grep -q 'DevFeed-v1.2.6-release.apk'
+          curl -fsSL "https://api.github.com/repos/$GITHUB_REPOSITORY/releases/latest" | grep -q 'DevFeed-v1.2.7-release.apk'
