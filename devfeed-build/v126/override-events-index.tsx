@@ -37,7 +37,28 @@ function isExpiredEvent(e: EventItem): boolean {
   return eventEndAt !== null && eventEndAt < now;
 }
 
-function dday(deadline:string|null){if(!deadline)return '';const d=Math.ceil((new Date(deadline).getTime()-Date.now())/86400000);return d>=0?`D-${d}`:'마감';}
+function kstDateParts(value: Date) {
+  const parts = new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'Asia/Seoul',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).formatToParts(value);
+  const get = (type: string) => Number(parts.find(p => p.type === type)?.value ?? 0);
+  return { y: get('year'), m: get('month'), d: get('day') };
+}
+
+function dday(deadline: string | null) {
+  if (!deadline) return '';
+  const match = deadline.slice(0, 10).match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (!match) return '';
+  const target = Date.UTC(Number(match[1]), Number(match[2]) - 1, Number(match[3]));
+  const now = kstDateParts(new Date());
+  const today = Date.UTC(now.y, now.m - 1, now.d);
+  const days = Math.round((target - today) / 86400000);
+  return days >= 0 ? `D-${days}` : '마감';
+}
+
 function meta(e:EventItem){const out=[];if(e.location)out.push(e.location);if(e.isOnline)out.push('온라인');if(e.fee===0)out.push('무료');if(e.highSchoolAllowed===true)out.push('고등학생 가능');return out;}
 function EventCard({e}:{e:EventItem}){const approximate=eventPrecision(e)!=='EXACT';return <Card onPress={()=>router.push(`/event/${e.id}`)}>
   <View style={{flexDirection:'row',justifyContent:'space-between',gap:10}}><Text style={[ui.h2,{flex:1}]}>{e.title}</Text>{dday(e.deadline)?<Text style={{color:e.importance==='HIGH'?colors.red:colors.muted,fontWeight:'800'}}>{dday(e.deadline)}</Text>:null}</View>
