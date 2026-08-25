@@ -1,0 +1,62 @@
+name: DevFeed Curated Sync AME 2026
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  sync-curated:
+    if: contains(github.event.head_commit.message, 'sync: add AME 2026')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout curated branch
+        uses: actions/checkout@v4
+        with:
+          ref: devfeed-runtime
+          fetch-depth: 0
+      - name: Update curated events
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          p=Path('devfeed-curated-events.json')
+          data=json.loads(p.read_text(encoding='utf-8'))
+          event={
+            'title':'2026 자율주행모빌리티산업전 (AME 2026)',
+            'categories':['AI','자율주행','로봇','센서','소프트웨어','모빌리티','전시회'],
+            'startDate':'2026-08-25T10:00:00+09:00',
+            'endDate':'2026-08-27T16:00:00+09:00',
+            'dateText':'2026년 8월 25일~27일 · 25~26일 10:00~17:00, 27일 10:00~16:00',
+            'datePrecision':'EXACT',
+            'deadline':None,
+            'location':'서울 COEX B홀',
+            'isOnline':False,
+            'fee':10000,
+            'highSchoolAllowed':None,
+            'importance':'HIGH',
+            'summary':'자율주행 핵심 센서·차량 전자제어·반도체·정밀지도부터 SDV, 시뮬레이션·검증, AI·데이터, 사이버보안, 무인이동·물류·서비스 로봇까지 다루는 자율주행 전문 전시회. 현장등록으로 관람 가능하며 8월 27일에는 자율주행 트렌드 무료 컨퍼런스와 차량용 온디바이스 AI·디지털트윈 등 참가기업 세미나도 진행된다.',
+            'sourceUrl':'https://am-expo.co.kr/sub-4-1'
+          }
+          events=data.get('events',[])
+          out=[]; replaced=False
+          for e in events:
+              if (e.get('title')==event['title']) or (e.get('title')==event['title'] and e.get('sourceUrl')==event['sourceUrl']):
+                  if not replaced:
+                      out.append(event); replaced=True
+              else:
+                  out.append(e)
+          if not replaced: out.append(event)
+          data['events']=out
+          data['updatedAt']='2026-08-26T04:34:54+09:00'
+          p.write_text(json.dumps(data,ensure_ascii=False,separators=(',',':')),encoding='utf-8')
+          PY
+          git config user.name 'devfeed-bot'
+          git config user.email 'actions@users.noreply.github.com'
+          git add devfeed-curated-events.json
+          if git diff --cached --quiet; then exit 0; fi
+          git commit -m 'sync: add AME 2026 to curated events'
+          git push origin HEAD:devfeed-runtime
