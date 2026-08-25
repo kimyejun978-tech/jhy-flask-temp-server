@@ -1,0 +1,22 @@
+{
+  "expo": {
+    "name": "DevFeed",
+    "slug": "devfeed",
+    "version": "1.6.1",
+    "orientation": "portrait",
+    "scheme": "devfeed",
+    "userInterfaceStyle": "light",
+    "newArchEnabled": true,
+    "plugins": [
+      "expo-router",
+      "expo-notifications",
+      ["expo-calendar", {"calendarPermission": "DevFeed가 일정을 확인하고 새 일정을 캘린더에 추가·수정·삭제하기 위해 캘린더 권한을 사용합니다."}]
+    ],
+    "android": {
+      "package": "app.devfeed.mobile",
+      "versionCode": 24,
+      "permissions": ["READ_CALENDAR", "WRITE_CALENDAR", "REQUEST_INSTALL_PACKAGES"]
+    },
+    "ios": {"bundleIdentifier": "app.devfeed.mobile"}
+  }
+}
