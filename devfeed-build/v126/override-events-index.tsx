@@ -30,7 +30,7 @@ function statusLabel(value: EventItem['userStatus']) {
   if (value === 'INTERESTED') return '관심';
   if (value === 'PLANNING') return '참가 예정';
   if (value === 'APPLIED') return '신청 완료';
-  if (value === 'DONE') return '완료';
+  if (value === 'COMPLETED') return '완료';
   return '';
 }
 
