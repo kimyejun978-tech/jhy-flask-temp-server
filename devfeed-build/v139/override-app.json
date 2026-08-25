@@ -1,0 +1,22 @@
+{
+  "expo": {
+    "name": "DevFeed",
+    "slug": "devfeed",
+    "version": "1.3.9",
+    "orientation": "portrait",
+    "scheme": "devfeed",
+    "userInterfaceStyle": "light",
+    "newArchEnabled": true,
+    "plugins": [
+      "expo-router",
+      "expo-notifications",
+      ["expo-calendar", {"calendarPermission": "DevFeed가 기존 일정과 행사 시간을 비교하기 위해 캘린더를 확인합니다."}]
+    ],
+    "android": {
+      "package": "app.devfeed.mobile",
+      "versionCode": 19,
+      "permissions": ["READ_CALENDAR", "WRITE_CALENDAR", "REQUEST_INSTALL_PACKAGES"]
+    },
+    "ios": {"bundleIdentifier": "app.devfeed.mobile"}
+  }
+}
