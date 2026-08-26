@@ -1,0 +1,45 @@
+export const colors = {
+  bg: '#F7F7FA',
+  surface: '#FFFFFF',
+  card: '#FFFFFF',
+  cardAlt: '#F1F1F6',
+  text: '#17171C',
+  muted: '#757582',
+  muted2: '#A0A0AA',
+  line: '#E6E6ED',
+  lineStrong: '#D8D8E2',
+  accent: '#6D4AFF',
+  accentDark: '#5135D8',
+  accentSoft: '#EEE9FF',
+  accentSoft2: '#F6F3FF',
+  purple: '#7A4DFF',
+  pink: '#CB62DA',
+  orange: '#EE8A55',
+  green: '#2E9C73',
+  greenSoft: '#EAF7F1',
+  red: '#D95768',
+  redSoft: '#FBECEF',
+  yellow: '#B9852E',
+  yellowSoft: '#FBF3DF',
+  blue: '#4C7BEA',
+  blueSoft: '#EAF0FF',
+  timeline: '#EAEAF0',
+  white: '#FFFFFF',
+  black: '#111114',
+};
+
+export const radius = {
+  sm: 10,
+  md: 14,
+  lg: 20,
+  xl: 28,
+  pill: 999,
+};
+
+export const space = {
+  xs: 6,
+  sm: 10,
+  md: 16,
+  lg: 22,
+  xl: 30,
+};
