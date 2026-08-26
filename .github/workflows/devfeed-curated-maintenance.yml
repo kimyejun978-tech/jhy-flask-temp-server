@@ -1,0 +1,104 @@
+name: DevFeed curated event maintenance
+
+on:
+  push:
+    branches: [devfeed-runtime]
+    paths:
+      - '.github/workflows/devfeed-curated-maintenance.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: devfeed-runtime
+      - name: Clean expired items and sync verified event
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          import json
+          from datetime import datetime, time
+          from zoneinfo import ZoneInfo
+          from pathlib import Path
+
+          path = Path('devfeed-curated-events.json')
+          data = json.loads(path.read_text(encoding='utf-8'))
+          kst = ZoneInfo('Asia/Seoul')
+          now = datetime.now(kst)
+
+          def parse_iso(value):
+              if not value:
+                  return None
+              if len(value) == 10:
+                  d = datetime.fromisoformat(value).date()
+                  return datetime.combine(d, time(23, 59, 59), tzinfo=kst)
+              try:
+                  dt = datetime.fromisoformat(value.replace('Z', '+00:00'))
+                  if dt.tzinfo is None:
+                      dt = dt.replace(tzinfo=kst)
+                  return dt.astimezone(kst)
+              except Exception:
+                  return None
+
+          active = []
+          for e in data.get('events', []):
+              deadline = parse_iso(e.get('deadline'))
+              if deadline and deadline < now:
+                  continue
+              if not e.get('deadline') and e.get('datePrecision') == 'EXACT':
+                  if e.get('endDate'):
+                      end_at = parse_iso(e.get('endDate'))
+                      if end_at and end_at < now:
+                          continue
+                  elif e.get('startDate'):
+                      start = e.get('startDate')
+                      if len(start) >= 10:
+                          try:
+                              day = datetime.fromisoformat(start[:10]).date()
+                              if day < now.date():
+                                  continue
+                          except Exception:
+                              pass
+              active.append(e)
+
+          event = {
+            'title': '2026 AI 에너지전환 컨퍼런스 & 제3회 풍력발전량 예측 AI 경진대회 시상식',
+            'categories': ['AI', '에너지', 'AI 반도체', '컨퍼런스'],
+            'startDate': '2026-09-03T14:00:00+09:00',
+            'endDate': '2026-09-03T17:00:00+09:00',
+            'dateText': '2026년 9월 3일 14:00~17:00',
+            'datePrecision': 'EXACT',
+            'deadline': '2026-09-02',
+            'location': '서울 강남 슈피겐홀',
+            'isOnline': False,
+            'fee': 0,
+            'highSchoolAllowed': None,
+            'importance': 'HIGH',
+            'summary': '한국동서발전과 데이콘이 진행하는 무료 AI 에너지전환 컨퍼런스. FuriosaAI CTO의 AI 반도체 세션, 60Hertz의 AI 에너지전환 세션, 조코딩 라이브 토크와 풍력발전량 예측 AI 경진대회 시상식을 함께 진행하며 관심 학생과 업계 관계자가 신청할 수 있다.',
+            'sourceUrl': 'https://www.dacon.io/competitions/official/236756/overview/description'
+          }
+
+          matched = False
+          for i, e in enumerate(active):
+              if e.get('title') == event['title'] and e.get('sourceUrl') == event['sourceUrl']:
+                  active[i] = event
+                  matched = True
+                  break
+          if not matched:
+              active.append(event)
+
+          data['events'] = active
+          data['updatedAt'] = now.isoformat(timespec='seconds')
+          path.write_text(json.dumps(data, ensure_ascii=False, separators=(',', ':')), encoding='utf-8')
+          PY
+          git config user.name 'DevFeed Bot'
+          git config user.email 'actions@github.com'
+          git add devfeed-curated-events.json
+          if ! git diff --cached --quiet; then
+            git commit -m 'data: refresh curated events'
+            git push origin HEAD:devfeed-runtime
+          fi
