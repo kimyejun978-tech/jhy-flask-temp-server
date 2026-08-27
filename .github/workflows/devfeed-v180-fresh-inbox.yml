@@ -49,7 +49,9 @@ jobs:
           cp devfeed-build/v170/calendar-create.ts devfeed-build/src/mobile/src/calendar-create.ts
           python3 devfeed-build/v171/apply-title-cleanup.py devfeed-build/src/mobile/src/calendar-create.ts
 
-          mkdir -p devfeed-build/src/mobile/src/components devfeed-build/src/mobile/app/ai-news\n          cp devfeed-build/v180/freshness.ts devfeed-build/src/mobile/src/freshness.ts\n          cp devfeed-build/v180/override-fresh-inbox.tsx devfeed-build/src/mobile/app/fresh-inbox.tsx
+          mkdir -p devfeed-build/src/mobile/src/components devfeed-build/src/mobile/app/ai-news
+          cp devfeed-build/v180/freshness.ts devfeed-build/src/mobile/src/freshness.ts
+          cp devfeed-build/v180/override-fresh-inbox.tsx devfeed-build/src/mobile/app/fresh-inbox.tsx
           cp devfeed-build/v137/theme.ts devfeed-build/src/mobile/src/theme.ts
           cp devfeed-build/v170/Ui-responsive.tsx devfeed-build/src/mobile/src/components/Ui.tsx
           cp devfeed-build/v140/CalendarQuickAddFab.tsx devfeed-build/src/mobile/src/components/CalendarQuickAddFab.tsx
