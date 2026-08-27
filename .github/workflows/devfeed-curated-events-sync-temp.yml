@@ -1,0 +1,59 @@
+name: DevFeed curated event sync temp
+
+on:
+  push:
+    branches: [devfeed-runtime]
+    paths:
+      - '.github/workflows/devfeed-curated-events-sync-temp.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: devfeed-runtime
+      - name: Update curated event feed
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          from datetime import datetime, timezone, timedelta
+
+          path = Path('devfeed-curated-events.json')
+          data = json.loads(path.read_text(encoding='utf-8'))
+          event = {
+            'title': '2026 스마트건설·안전·AI 엑스포',
+            'categories': ['AI','로봇','IoT','디지털트윈','스마트건설','전시회'],
+            'startDate': '2026-11-25T10:00:00+09:00',
+            'endDate': '2026-11-27T16:00:00+09:00',
+            'dateText': '2026년 11월 25일 ~ 11월 27일',
+            'datePrecision': 'EXACT',
+            'deadline': '2026-11-24',
+            'location': '경기 고양 KINTEX 제1전시장 3,4홀',
+            'isOnline': False,
+            'fee': 0,
+            'highSchoolAllowed': True,
+            'importance': 'HIGH',
+            'summary': '국토교통부 주최 대형 스마트건설 전시회. AI 영상분석·위험행동 감지, 건설로봇·협동로봇, 자율주행 건설장비, LiDAR·3D 스캔, IoT 예측진단, 디지털트윈, AI 데이터센터·물리 인프라 등 건설 현장의 AI·로봇·자동화 기술을 한 자리에서 다룬다. 사전등록 없이 누구나 무료 관람 가능하며 개인 사전등록은 11월 24일까지다.',
+            'sourceUrl': 'https://smartconexpo.com/visit/info/'
+          }
+          events = data.setdefault('events', [])
+          idx = next((i for i,e in enumerate(events) if e.get('title') == event['title'] or e.get('sourceUrl') == event['sourceUrl']), None)
+          if idx is None:
+              events.append(event)
+          else:
+              events[idx] = event
+          data['updatedAt'] = datetime.now(timezone(timedelta(hours=9))).isoformat(timespec='seconds')
+          path.write_text(json.dumps(data, ensure_ascii=False, separators=(',', ':')), encoding='utf-8')
+          PY
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add devfeed-curated-events.json
+          git diff --cached --quiet && exit 0
+          git commit -m 'data: add 2026 Smart Construction Safety AI Expo'
+          git push origin HEAD:devfeed-runtime
