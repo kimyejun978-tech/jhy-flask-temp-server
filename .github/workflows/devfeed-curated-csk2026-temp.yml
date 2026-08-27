@@ -1,0 +1,101 @@
+name: DevFeed curated CSK 2026 sync
+
+on:
+  push:
+    branches: [devfeed-runtime]
+    paths:
+      - '.github/workflows/devfeed-curated-csk2026-temp.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: devfeed-runtime
+      - name: Update curated events
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          import json
+          from datetime import datetime, timezone
+          from zoneinfo import ZoneInfo
+          from pathlib import Path
+
+          path = Path('devfeed-curated-events.json')
+          data = json.loads(path.read_text(encoding='utf-8'))
+          now = datetime.now(ZoneInfo('Asia/Seoul'))
+
+          def parse_iso(s, end_of_day=False):
+              if not s:
+                  return None
+              try:
+                  if len(s) == 10:
+                      dt = datetime.fromisoformat(s + ('T23:59:59+09:00' if end_of_day else 'T00:00:00+09:00'))
+                  else:
+                      dt = datetime.fromisoformat(s)
+                  if dt.tzinfo is None:
+                      dt = dt.replace(tzinfo=ZoneInfo('Asia/Seoul'))
+                  return dt.astimezone(ZoneInfo('Asia/Seoul'))
+              except Exception:
+                  return None
+
+          active = []
+          for e in data.get('events', []):
+              expired = False
+              d = e.get('deadline')
+              if d:
+                  dd = parse_iso(d, end_of_day=(len(d) == 10))
+                  if dd and dd < now:
+                      expired = True
+              if not expired and e.get('datePrecision') == 'EXACT' and not d:
+                  end = e.get('endDate')
+                  start = e.get('startDate')
+                  if end:
+                      ee = parse_iso(end, end_of_day=(len(end) == 10))
+                      if ee and ee < now:
+                          expired = True
+                  elif start:
+                      ss = parse_iso(start, end_of_day=True)
+                      if ss and ss < now:
+                          expired = True
+              if not expired:
+                  active.append(e)
+
+          event = {
+            'title': 'Cyber Summit Korea 2026',
+            'categories': ['사이버보안', 'AI 보안', '개발자 컨퍼런스', '전시회'],
+            'startDate': '2026-09-16',
+            'endDate': '2026-09-18',
+            'dateText': '2026년 9월 16일 ~ 9월 18일',
+            'datePrecision': 'EXACT',
+            'deadline': None,
+            'location': '서울 COEX 그랜드볼룸·아셈볼룸·오디토리움·컨퍼런스룸E',
+            'isOnline': False,
+            'fee': 0,
+            'highSchoolAllowed': None,
+            'importance': 'HIGH',
+            'summary': '국가정보원과 국가보안기술연구소가 주최하는 글로벌 사이버안보 행사. AI 시대의 신기술 보안·신뢰, 국제 전략·협력, 사이버안보 정책을 다루는 컨퍼런스와 국제사이버훈련, 사이버공격방어대회, 청소년 화이트해커 아카데미, 보안 기술 전시가 함께 열린다.',
+            'sourceUrl': 'https://cybersummit.kr/registration'
+          }
+          replaced = False
+          for i, e in enumerate(active):
+              if e.get('title') == event['title'] and e.get('sourceUrl') == event['sourceUrl']:
+                  active[i] = event
+                  replaced = True
+                  break
+          if not replaced:
+              active.append(event)
+
+          data['events'] = active
+          data['updatedAt'] = now.isoformat(timespec='seconds')
+          path.write_text(json.dumps(data, ensure_ascii=False, separators=(',', ':')), encoding='utf-8')
+          PY
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add devfeed-curated-events.json
+          git commit -m 'data: add Cyber Summit Korea 2026' || exit 0
+          git push origin HEAD:devfeed-runtime
