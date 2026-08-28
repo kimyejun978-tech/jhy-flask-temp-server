@@ -9,7 +9,7 @@ permissions:
 
 jobs:
   sync:
-    if: ${{ github.event.head_commit.message == 'sync: retry Kakao AI 돛 Summit 26' }}
+    if: "github.event.head_commit.message == 'sync Kakao AI 돛 Summit 26 final'"
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
