@@ -9,7 +9,7 @@ permissions:
 
 jobs:
   sync:
-    if: github.event.head_commit.message == 'sync: add Kakao AI 돛 Summit 26'
+    if: ${{ github.event.head_commit.message == 'sync: retry Kakao AI 돛 Summit 26' }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -20,7 +20,7 @@ jobs:
         run: |
           python3 - <<'PY'
           import json
-          from datetime import datetime, time
+          from datetime import datetime
           from zoneinfo import ZoneInfo
           from pathlib import Path
 
@@ -35,7 +35,10 @@ jobs:
                   if len(v) == 10:
                       y, m, d = map(int, v.split('-'))
                       return datetime(y, m, d, 23, 59, 59, tzinfo=ZoneInfo('Asia/Seoul'))
-                  return datetime.fromisoformat(v).astimezone(ZoneInfo('Asia/Seoul'))
+                  dt = datetime.fromisoformat(v)
+                  if dt.tzinfo is None:
+                      dt = dt.replace(tzinfo=ZoneInfo('Asia/Seoul'))
+                  return dt.astimezone(ZoneInfo('Asia/Seoul'))
               except Exception:
                   return None
 
@@ -71,13 +74,11 @@ jobs:
               'sourceUrl': 'https://kakaoaisail.org/aisailsummit/'
           }
           key = (new_event['title'], new_event['sourceUrl'])
-          replaced = False
           for i, e in enumerate(events):
               if (e.get('title'), e.get('sourceUrl')) == key:
                   events[i] = new_event
-                  replaced = True
                   break
-          if not replaced:
+          else:
               events.append(new_event)
           data['events'] = events
           data['updatedAt'] = now.isoformat(timespec='seconds')
