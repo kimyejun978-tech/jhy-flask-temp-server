@@ -1,0 +1,91 @@
+name: DevFeed runtime one-shot sync
+
+on:
+  push:
+    branches: [devfeed-runtime]
+
+permissions:
+  contents: write
+
+jobs:
+  sync:
+    if: github.event.head_commit.message == 'sync: add Kakao AI 돛 Summit 26'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: devfeed-runtime
+      - name: Update curated events
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          import json
+          from datetime import datetime, time
+          from zoneinfo import ZoneInfo
+          from pathlib import Path
+
+          p = Path('devfeed-curated-events.json')
+          data = json.loads(p.read_text(encoding='utf-8'))
+          now = datetime.now(ZoneInfo('Asia/Seoul'))
+
+          def parse_iso(v):
+              if not v:
+                  return None
+              try:
+                  if len(v) == 10:
+                      y, m, d = map(int, v.split('-'))
+                      return datetime(y, m, d, 23, 59, 59, tzinfo=ZoneInfo('Asia/Seoul'))
+                  return datetime.fromisoformat(v).astimezone(ZoneInfo('Asia/Seoul'))
+              except Exception:
+                  return None
+
+          def active(e):
+              deadline = parse_iso(e.get('deadline'))
+              if deadline and deadline < now:
+                  return False
+              if e.get('datePrecision') == 'EXACT':
+                  end = parse_iso(e.get('endDate'))
+                  if end and end < now:
+                      return False
+                  if not e.get('endDate') and e.get('startDate'):
+                      start = parse_iso(e.get('startDate'))
+                      if start and start < now:
+                          return False
+              return True
+
+          events = [e for e in data.get('events', []) if active(e)]
+          new_event = {
+              'title': '카카오 AI 돛 Summit 26',
+              'categories': ['AI', '개발자 행사', 'AI Agent', 'AX', '스타트업'],
+              'startDate': '2026-09-29T13:00:00+09:00',
+              'endDate': '2026-09-29T17:30:00+09:00',
+              'dateText': '2026년 9월 29일 13:00~17:30',
+              'datePrecision': 'EXACT',
+              'deadline': '2026-09-06T18:00:00+09:00',
+              'location': '부산 BPEX 부산항국제전시컨벤션센터 5층',
+              'isOnline': False,
+              'fee': 0,
+              'highSchoolAllowed': True,
+              'importance': 'HIGH',
+              'summary': '카카오·부산광역시·카카오임팩트가 함께 여는 지역 AI 기술 서밋. OpenAI, Google, AWS, AMD 등 국내외 AI 전문가·파트너 세션과 카카오 공동체의 AX 사례, 글로벌 파트너 부스가 운영되며 AI 기술에 관심 있는 학생·예비 개발자·주니어 개발자 등 누구나 사전 신청할 수 있다.',
+              'sourceUrl': 'https://kakaoaisail.org/aisailsummit/'
+          }
+          key = (new_event['title'], new_event['sourceUrl'])
+          replaced = False
+          for i, e in enumerate(events):
+              if (e.get('title'), e.get('sourceUrl')) == key:
+                  events[i] = new_event
+                  replaced = True
+                  break
+          if not replaced:
+              events.append(new_event)
+          data['events'] = events
+          data['updatedAt'] = now.isoformat(timespec='seconds')
+          p.write_text(json.dumps(data, ensure_ascii=False, separators=(',', ':')), encoding='utf-8')
+          PY
+          rm -f .github/workflows/devfeed-runtime-sync-once.yml
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add devfeed-curated-events.json .github/workflows/devfeed-runtime-sync-once.yml
+          git commit -m 'chore: sync Kakao AI 돛 Summit 26 to DevFeed'
+          git push origin HEAD:devfeed-runtime
