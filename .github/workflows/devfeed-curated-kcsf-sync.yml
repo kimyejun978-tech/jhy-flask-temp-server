@@ -1,0 +1,99 @@
+name: DevFeed curated KCSF sync
+
+on:
+  push:
+    branches: [devfeed-runtime]
+    paths:
+      - '.github/workflows/devfeed-curated-kcsf-sync.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: devfeed-runtime
+      - name: Clean expired events and add KCSF 2026
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          import json
+          from datetime import datetime, time, timezone, timedelta
+          from pathlib import Path
+
+          p = Path('devfeed-curated-events.json')
+          data = json.loads(p.read_text(encoding='utf-8'))
+          KST = timezone(timedelta(hours=9))
+          now = datetime(2026, 8, 29, 15, 54, 0, tzinfo=KST)
+
+          def parse_iso(v, end_of_day=False):
+              if not v:
+                  return None
+              if len(v) == 10:
+                  d = datetime.fromisoformat(v)
+                  return datetime.combine(d.date(), time(23,59,59), KST)
+              try:
+                  dt = datetime.fromisoformat(v.replace('Z','+00:00'))
+                  if dt.tzinfo is None:
+                      dt = dt.replace(tzinfo=KST)
+                  return dt.astimezone(KST)
+              except Exception:
+                  return None
+
+          active=[]
+          for e in data.get('events',[]):
+              expired=False
+              d=parse_iso(e.get('deadline'))
+              if d and d < now:
+                  expired=True
+              if not expired and e.get('datePrecision') == 'EXACT':
+                  end=parse_iso(e.get('endDate'))
+                  if end and end < now:
+                      expired=True
+                  elif not e.get('endDate') and e.get('startDate'):
+                      start=parse_iso(e.get('startDate'))
+                      if start and start < now:
+                          expired=True
+              if not expired:
+                  active.append(e)
+
+          event={
+            'title':'대한민국 클라우드/SaaS 포럼 2026 (KCSF2026)',
+            'categories':['AI','클라우드','SaaS','AI Agent','개발자 컨퍼런스'],
+            'startDate':'2026-09-29T10:00:00+09:00',
+            'endDate':'2026-09-29T15:30:00+09:00',
+            'dateText':'2026년 9월 29일 10:00~15:30',
+            'datePrecision':'EXACT',
+            'deadline':'2026-09-27T16:00:00+09:00',
+            'location':'서울 여의도 FKI타워 그랜드볼룸(1층)',
+            'isOnline':False,
+            'fee':35000,
+            'highSchoolAllowed':True,
+            'importance':'HIGH',
+            'summary':'아이뉴스24가 주최하는 클라우드·SaaS·AI 에이전트 포럼. AI 에이전트와 클라우드 인프라, 글로벌 테크 생태계 변화를 다루며 중·고등학생을 포함한 학생 할인 등록이 공식 안내돼 있다. 학생 등록은 9월 27일 16시까지 35,000원이다.',
+            'sourceUrl':'https://onoff.inews24.com/2026/kcsf/'
+          }
+          found=False
+          for i,e in enumerate(active):
+              if e.get('title')==event['title'] or e.get('sourceUrl')==event['sourceUrl']:
+                  active[i]=event
+                  found=True
+                  break
+          if not found:
+              active.append(event)
+          data['events']=active
+          data['updatedAt']='2026-08-29T15:54:00+09:00'
+          p.write_text(json.dumps(data, ensure_ascii=False, separators=(',',':')), encoding='utf-8')
+          PY
+      - name: Commit curated feed
+        shell: bash
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add devfeed-curated-events.json
+          git diff --cached --quiet && exit 0
+          git commit -m 'data: add KCSF 2026 curated event'
+          git push origin HEAD:devfeed-runtime
