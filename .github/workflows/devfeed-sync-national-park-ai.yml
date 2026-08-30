@@ -1,0 +1,101 @@
+name: DevFeed curated event sync - National Park AI
+
+on:
+  push:
+    branches: [devfeed-runtime]
+
+permissions:
+  contents: write
+
+jobs:
+  sync:
+    if: contains(github.event.head_commit.message, 'sync: national park AI challenge')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: devfeed-runtime
+      - name: Clean expired events and add National Park AI challenge
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          import json
+          from datetime import datetime, date, time
+          from zoneinfo import ZoneInfo
+          from pathlib import Path
+
+          KST = ZoneInfo('Asia/Seoul')
+          now = datetime.now(KST)
+          path = Path('devfeed-curated-events.json')
+          data = json.loads(path.read_text(encoding='utf-8'))
+          events = data.get('events', [])
+
+          def parse_iso(v, date_only_end=False):
+              if not v:
+                  return None
+              try:
+                  if len(v) == 10 and v[4] == '-' and v[7] == '-':
+                      d = date.fromisoformat(v)
+                      return datetime.combine(d, time(23,59,59) if date_only_end else time(0,0,0), KST)
+                  dt = datetime.fromisoformat(v.replace('Z','+00:00'))
+                  if dt.tzinfo is None:
+                      dt = dt.replace(tzinfo=KST)
+                  return dt.astimezone(KST)
+              except Exception:
+                  return None
+
+          def expired(e):
+              dl = e.get('deadline')
+              if dl:
+                  t = parse_iso(dl, date_only_end=True)
+                  return bool(t and t < now)
+              if e.get('datePrecision') != 'EXACT':
+                  return False
+              if e.get('endDate'):
+                  t = parse_iso(e.get('endDate'), date_only_end=True)
+                  return bool(t and t < now)
+              if e.get('startDate'):
+                  t = parse_iso(e.get('startDate'), date_only_end=True)
+                  return bool(t and t < now)
+              return False
+
+          cleaned = [e for e in events if not expired(e)]
+          new_event = {
+            'title': '2026 국립공원 위성 모니터링 AI 챌린지',
+            'categories': ['AI','컴퓨터비전','위성영상','환경','경진대회'],
+            'startDate': '2026-08-31',
+            'endDate': '2026-10-06',
+            'dateText': '주제 1·2: 2026년 8월 31일~9월 21일 · 주제 3·4: 2026년 9월 14일~10월 6일',
+            'datePrecision': 'EXACT',
+            'deadline': '2026-10-06T14:00:00+09:00',
+            'location': '온라인 · AI Factory',
+            'isOnline': True,
+            'fee': None,
+            'highSchoolAllowed': True,
+            'importance': 'HIGH',
+            'summary': '14세 이상 대한민국 국민이 개인 또는 최대 5인 팀으로 참가해 실제 위성영상으로 구상나무 고사, 산사태, 시설물 변화, 해안 쓰레기를 탐지·분석하는 AI 모델을 개발하는 경진대회. 4개 주제별 600만 원, 총상금 2,400만 원 규모.',
+            'sourceUrl': 'https://aifactory.space/ko/page/knps/competition'
+          }
+          key = (new_event['title'], new_event['sourceUrl'])
+          replaced = False
+          out = []
+          for e in cleaned:
+              if (e.get('title'), e.get('sourceUrl')) == key:
+                  out.append(new_event); replaced = True
+              else:
+                  out.append(e)
+          if not replaced:
+              out.append(new_event)
+          data['events'] = out
+          data['updatedAt'] = now.isoformat(timespec='seconds')
+          path.write_text(json.dumps(data, ensure_ascii=False, separators=(',', ':')), encoding='utf-8')
+          PY
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add devfeed-curated-events.json
+          if git diff --cached --quiet; then
+            echo 'No changes'
+          else
+            git commit -m 'chore: sync curated events and remove expired entries'
+            git push origin HEAD:devfeed-runtime
+          fi
