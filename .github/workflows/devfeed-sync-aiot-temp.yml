@@ -1,0 +1,58 @@
+name: DevFeed temporary AIoT sync
+
+on:
+  push:
+    branches: [devfeed-runtime]
+    paths: ['.github/workflows/devfeed-sync-aiot-temp.yml']
+
+permissions:
+  contents: write
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Update curated events
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          from datetime import datetime, timezone, timedelta
+
+          p=Path('devfeed-curated-events.json')
+          data=json.loads(p.read_text(encoding='utf-8'))
+          event={
+            'title':'AIoT Korea Exhibition 2026',
+            'categories':['AI','IoT','임베디드','센서','스마트홈','스마트팩토리','전시회'],
+            'startDate':'2026-11-03T10:00:00+09:00',
+            'endDate':'2026-11-05T17:00:00+09:00',
+            'dateText':'2026년 11월 3일 ~ 11월 5일, 10:00~17:00',
+            'datePrecision':'EXACT',
+            'deadline':None,
+            'location':'서울 COEX 3층 Hall D',
+            'isOnline':False,
+            'fee':0,
+            'highSchoolAllowed':None,
+            'importance':'HIGH',
+            'summary':'과학기술정보통신부가 주최하는 국내 AI·IoT 전문 전시회. AI+IoT 융합 솔루션, 칩·모듈·센서·게이트웨이, 스마트홈·오피스·헬스케어, 스마트팩토리, AGV·UGV, 통신·네트워크·보안 기술 등을 전시한다. 온라인 사전등록은 2026년 11월 2일까지 무료이며 현장등록은 10,000원이다.',
+            'sourceUrl':'https://www.aiotkorea.or.kr/2026/eng/about/information.asp'
+          }
+          events=data.get('events',[])
+          key=lambda e:(e.get('title'),e.get('sourceUrl'))
+          target=key(event)
+          replaced=False
+          for i,e in enumerate(events):
+            if key(e)==target or e.get('title')==event['title']:
+              events[i]=event; replaced=True; break
+          if not replaced: events.append(event)
+          data['events']=events
+          data['updatedAt']='2026-08-30T20:37:45+09:00'
+          p.write_text(json.dumps(data,ensure_ascii=False,separators=(',',':')),encoding='utf-8')
+          PY
+          git config user.name 'DevFeed Automation'
+          git config user.email 'actions@users.noreply.github.com'
+          git add devfeed-curated-events.json
+          git diff --cached --quiet || git commit -m 'data: add AIoT Korea Exhibition 2026'
+          git push
