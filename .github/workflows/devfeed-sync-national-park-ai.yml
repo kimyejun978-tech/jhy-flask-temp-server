@@ -3,13 +3,14 @@ name: DevFeed curated event sync - National Park AI
 on:
   push:
     branches: [devfeed-runtime]
+    paths:
+      - '.github/workflows/devfeed-sync-national-park-ai.yml'
 
 permissions:
   contents: write
 
 jobs:
   sync:
-    if: contains(github.event.head_commit.message, 'sync: national park AI challenge')
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -20,15 +21,13 @@ jobs:
         run: |
           python3 - <<'PY'
           import json
-          from datetime import datetime, date, time
-          from zoneinfo import ZoneInfo
+          from datetime import datetime, date, time, timezone, timedelta
           from pathlib import Path
 
-          KST = ZoneInfo('Asia/Seoul')
+          KST = timezone(timedelta(hours=9))
           now = datetime.now(KST)
           path = Path('devfeed-curated-events.json')
           data = json.loads(path.read_text(encoding='utf-8'))
-          events = data.get('events', [])
 
           def parse_iso(v, date_only_end=False):
               if not v:
@@ -59,8 +58,8 @@ jobs:
                   return bool(t and t < now)
               return False
 
-          cleaned = [e for e in events if not expired(e)]
-          new_event = {
+          active = [e for e in data.get('events', []) if not expired(e)]
+          event = {
             'title': '2026 국립공원 위성 모니터링 AI 챌린지',
             'categories': ['AI','컴퓨터비전','위성영상','환경','경진대회'],
             'startDate': '2026-08-31',
@@ -76,26 +75,24 @@ jobs:
             'summary': '14세 이상 대한민국 국민이 개인 또는 최대 5인 팀으로 참가해 실제 위성영상으로 구상나무 고사, 산사태, 시설물 변화, 해안 쓰레기를 탐지·분석하는 AI 모델을 개발하는 경진대회. 4개 주제별 600만 원, 총상금 2,400만 원 규모.',
             'sourceUrl': 'https://aifactory.space/ko/page/knps/competition'
           }
-          key = (new_event['title'], new_event['sourceUrl'])
-          replaced = False
-          out = []
-          for e in cleaned:
-              if (e.get('title'), e.get('sourceUrl')) == key:
-                  out.append(new_event); replaced = True
-              else:
-                  out.append(e)
-          if not replaced:
-              out.append(new_event)
-          data['events'] = out
+          found = False
+          for i, e in enumerate(active):
+              if e.get('title') == event['title'] or e.get('sourceUrl') == event['sourceUrl']:
+                  active[i] = event
+                  found = True
+                  break
+          if not found:
+              active.append(event)
+          data['events'] = active
           data['updatedAt'] = now.isoformat(timespec='seconds')
-          path.write_text(json.dumps(data, ensure_ascii=False, separators=(',', ':')), encoding='utf-8')
+          path.write_text(json.dumps(data, ensure_ascii=False, separators=(',',':')), encoding='utf-8')
           PY
+      - name: Commit curated feed
+        shell: bash
+        run: |
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add devfeed-curated-events.json
-          if git diff --cached --quiet; then
-            echo 'No changes'
-          else
-            git commit -m 'chore: sync curated events and remove expired entries'
-            git push origin HEAD:devfeed-runtime
-          fi
+          git diff --cached --quiet && exit 0
+          git commit -m 'data: sync national park AI challenge and clean expired events'
+          git push origin HEAD:devfeed-runtime
