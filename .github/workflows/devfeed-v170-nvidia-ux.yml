@@ -1,4 +1,4 @@
-name: DevFeed v1.7.0 NVIDIA Calendar UX Release
+name: DevFeed v1.8.1 Re-engagement UX Release
 
 on:
   push:
@@ -8,11 +8,11 @@ permissions:
   contents: write
 
 jobs:
-  build-v170:
+  build-v181:
     runs-on: ubuntu-latest
     timeout-minutes: 60
     steps:
-      - name: Checkout v1.7.0 branch
+      - name: Checkout v1.8.1 branch
         uses: actions/checkout@v4
 
       - name: Set up Node
@@ -26,7 +26,7 @@ jobs:
           distribution: temurin
           java-version: '17'
 
-      - name: Restore DevFeed source and v1.7.0 NVIDIA calendar UX patch
+      - name: Restore DevFeed source and v1.8.1 re-engagement UX patch
         shell: bash
         run: |
           set -euxo pipefail
@@ -140,15 +140,15 @@ jobs:
           test -f "$APK"
           unzip -l "$APK" | grep -E 'assets/index.android.bundle|assets/.*\.bundle'
           mkdir -p devfeed-build/output
-          cp "$APK" devfeed-build/output/DevFeed-v1.7.0-release.apk
-          sha256sum devfeed-build/output/DevFeed-v1.7.0-release.apk
-          ls -lh devfeed-build/output/DevFeed-v1.7.0-release.apk
+          cp "$APK" devfeed-build/output/DevFeed-v1.8.1-release.apk
+          sha256sum devfeed-build/output/DevFeed-v1.8.1-release.apk
+          ls -lh devfeed-build/output/DevFeed-v1.8.1-release.apk
 
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
         with:
-          name: DevFeed-v1.7.0-NVIDIA-Calendar-UX-APK
-          path: devfeed-build/output/DevFeed-v1.7.0-release.apk
+          name: DevFeed-v1.8.1-Reengagement-UX-APK
+          path: devfeed-build/output/DevFeed-v1.8.1-release.apk
           if-no-files-found: error
           retention-days: 7
 
@@ -156,12 +156,12 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh release delete v1.7.0 --cleanup-tag -y --repo "$GITHUB_REPOSITORY" 2>/dev/null || true
-          gh release create v1.7.0 devfeed-build/output/DevFeed-v1.7.0-release.apk \
+          gh release delete v1.8.1 --cleanup-tag -y --repo "$GITHUB_REPOSITORY" 2>/dev/null || true
+          gh release create v1.8.1 devfeed-build/output/DevFeed-v1.8.1-release.apk \
             --repo "$GITHUB_REPOSITORY" \
-            --title "DevFeed v1.7.0" \
-            --notes "NVIDIA Build 초고속 모델 기반 일정 해석에 맞춘 앱 업데이트. 일정 빠른 추가 화면에 단계별 로딩, 요청 취소·타임아웃, 재시도, 중복 저장 방지, 인라인 성공 상태와 접근성 레이블을 추가했습니다. v1.6.1의 safe-area 패치와 위젯팩을 그대로 포함합니다."
+            --title "DevFeed v1.8.1" \
+            --notes "앱을 다시 열고 싶게 만드는 흐름을 정리했습니다. 첫 화면에 지금 볼 행사와 한 번 탭하는 관심 저장을 추가했고, 저장한 행사를 다음 방문에 바로 보여줍니다. 중복 행사를 숨기고 긴 행사 목록은 6개씩 나누었으며, 신청 마감과 행사 날짜를 구분해 표시합니다."
 
       - name: Verify latest release endpoint
         run: |
-          curl -fsSL "https://api.github.com/repos/$GITHUB_REPOSITORY/releases/latest" | grep -q 'DevFeed-v1.7.0-release.apk'
+          curl -fsSL "https://api.github.com/repos/$GITHUB_REPOSITORY/releases/latest" | grep -q 'DevFeed-v1.8.1-release.apk'

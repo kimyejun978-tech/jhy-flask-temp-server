@@ -45,6 +45,39 @@ export function useSetEventStatus(id: string) {
     },
   });
 }
+
+export function useSetAnyEventStatus() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, status }: { id: string; status: EventStatus }) => api(`/v1/events/${id}/status`, { method: 'PUT', body: JSON.stringify({ status }) }),
+    onMutate: async ({ id, status }) => {
+      await Promise.all([
+        qc.cancelQueries({ queryKey: ['events'] }),
+        qc.cancelQueries({ queryKey: ['schedule'] }),
+      ]);
+      const previousEvents = qc.getQueryData<{ items: EventItem[] }>(['events']);
+      const previousSchedule = qc.getQueryData<{ items: EventItem[] }>(['schedule']);
+      const update = (item: EventItem) => item.id === id ? { ...item, userStatus: status } : item;
+      if (previousEvents) qc.setQueryData(['events'], { items: previousEvents.items.map(update) });
+      if (previousSchedule) {
+        const source = (previousEvents?.items ?? previousSchedule.items).map(update);
+        qc.setQueryData(['schedule'], { items: source.filter((item) => item.userStatus === 'PLANNING' || item.userStatus === 'APPLIED') });
+      }
+      return { previousEvents, previousSchedule };
+    },
+    onError: (_error, _variables, context) => {
+      if (!context) return;
+      if (context.previousEvents) qc.setQueryData(['events'], context.previousEvents);
+      if (context.previousSchedule) qc.setQueryData(['schedule'], context.previousSchedule);
+    },
+    onSettled: async () => {
+      await Promise.all([
+        qc.invalidateQueries({ queryKey: ['events'] }),
+        qc.invalidateQueries({ queryKey: ['schedule'] }),
+      ]);
+    },
+  });
+}
 export function useSchedule() { return useQuery({ queryKey:['schedule'], queryFn: () => api<{items: EventItem[]}>('/v1/schedule') }); }
 
 export type Preferences = {
