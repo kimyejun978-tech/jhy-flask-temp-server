@@ -1,1 +1,1 @@
-{"events":[{"title":"DevFeed Sync Test","categories":["test"],"startDate":"2020-01-01","endDate":"2020-01-01","dateText":"sync test","datePrecision":"EXACT","deadline":"2020-01-01","location":null,"isOnline":true,"fee":null,"highSchoolAllowed":null,"importance":"LOW","summary":"Temporary synchronization test item. It must be pruned immediately by the maintenance workflow.","sourceUrl":"https://example.com/devfeed-sync-test"}]}
+{"events":[]}
