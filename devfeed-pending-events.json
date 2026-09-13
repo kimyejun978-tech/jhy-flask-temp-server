@@ -1,1 +1,1 @@
-{"events":[{"title":"DevFeed cleanup trigger","categories":["maintenance"],"startDate":"2000-01-01","endDate":"2000-01-01","dateText":"maintenance trigger","datePrecision":"EXACT","deadline":"2000-01-01","location":null,"isOnline":null,"fee":null,"highSchoolAllowed":null,"importance":"LOW","summary":"Expired maintenance trigger used only to run curated feed cleanup.","sourceUrl":"https://example.com/devfeed-cleanup-trigger"}]}
+{"events":[]}
