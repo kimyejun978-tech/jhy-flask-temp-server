@@ -5,9 +5,15 @@ on:
     branches: [devfeed-runtime]
     paths:
       - '.github/workflows/devfeed-curated-maintenance.yml'
+      - 'devfeed-pending-events.json'
+  workflow_dispatch:
 
 permissions:
   contents: write
+
+concurrency:
+  group: devfeed-curated-maintenance
+  cancel-in-progress: false
 
 jobs:
   sync:
@@ -16,7 +22,9 @@ jobs:
       - uses: actions/checkout@v4
         with:
           ref: devfeed-runtime
-      - name: Clean expired items and sync verified event
+          fetch-depth: 0
+
+      - name: Merge pending events and clean expired items
         shell: bash
         run: |
           python3 - <<'PY'
@@ -25,18 +33,25 @@ jobs:
           from zoneinfo import ZoneInfo
           from pathlib import Path
 
-          path = Path('devfeed-curated-events.json')
-          data = json.loads(path.read_text(encoding='utf-8'))
+          curated_path = Path('devfeed-curated-events.json')
+          pending_path = Path('devfeed-pending-events.json')
+
+          data = json.loads(curated_path.read_text(encoding='utf-8'))
+          pending = {'events': []}
+          if pending_path.exists():
+              pending = json.loads(pending_path.read_text(encoding='utf-8'))
+
           kst = ZoneInfo('Asia/Seoul')
           now = datetime.now(kst)
 
-          def parse_iso(value):
+          def parse_iso(value, date_only_end_of_day=False):
               if not value:
                   return None
-              if len(value) == 10:
-                  d = datetime.fromisoformat(value).date()
-                  return datetime.combine(d, time(23, 59, 59), tzinfo=kst)
               try:
+                  if len(value) == 10:
+                      d = datetime.fromisoformat(value).date()
+                      t = time(23, 59, 59) if date_only_end_of_day else time(0, 0, 0)
+                      return datetime.combine(d, t, tzinfo=kst)
                   dt = datetime.fromisoformat(value.replace('Z', '+00:00'))
                   if dt.tzinfo is None:
                       dt = dt.replace(tzinfo=kst)
@@ -44,61 +59,69 @@ jobs:
               except Exception:
                   return None
 
+          def key(e):
+              return (e.get('title'), e.get('sourceUrl'))
+
+          # Upsert pending events by title + sourceUrl while preserving existing events.
+          events = list(data.get('events', []))
+          index = {key(e): i for i, e in enumerate(events)}
+          for event in pending.get('events', []):
+              k = key(event)
+              if k in index:
+                  events[index[k]] = event
+              else:
+                  index[k] = len(events)
+                  events.append(event)
+
+          # Apply DevFeed expiry rules after merging, so stale pending items cannot reappear.
           active = []
-          for e in data.get('events', []):
-              deadline = parse_iso(e.get('deadline'))
+          for e in events:
+              deadline = parse_iso(e.get('deadline'), date_only_end_of_day=True)
               if deadline and deadline < now:
                   continue
+
               if not e.get('deadline') and e.get('datePrecision') == 'EXACT':
-                  if e.get('endDate'):
-                      end_at = parse_iso(e.get('endDate'))
+                  end_value = e.get('endDate')
+                  start_value = e.get('startDate')
+
+                  if end_value:
+                      end_at = parse_iso(end_value, date_only_end_of_day=True)
                       if end_at and end_at < now:
                           continue
-                  elif e.get('startDate'):
-                      start = e.get('startDate')
-                      if len(start) >= 10:
+                  elif start_value:
+                      # A single exact start date with no endDate is treated as a one-day event.
+                      if len(start_value) >= 10:
                           try:
-                              day = datetime.fromisoformat(start[:10]).date()
-                              if day < now.date():
+                              event_day = datetime.fromisoformat(start_value[:10]).date()
+                              if event_day < now.date():
                                   continue
                           except Exception:
                               pass
+
               active.append(e)
-
-          event = {
-            'title': '2026 AI 에너지전환 컨퍼런스 & 제3회 풍력발전량 예측 AI 경진대회 시상식',
-            'categories': ['AI', '에너지', 'AI 반도체', '컨퍼런스'],
-            'startDate': '2026-09-03T14:00:00+09:00',
-            'endDate': '2026-09-03T17:00:00+09:00',
-            'dateText': '2026년 9월 3일 14:00~17:00',
-            'datePrecision': 'EXACT',
-            'deadline': '2026-09-02',
-            'location': '서울 강남 슈피겐홀',
-            'isOnline': False,
-            'fee': 0,
-            'highSchoolAllowed': None,
-            'importance': 'HIGH',
-            'summary': '한국동서발전과 데이콘이 진행하는 무료 AI 에너지전환 컨퍼런스. FuriosaAI CTO의 AI 반도체 세션, 60Hertz의 AI 에너지전환 세션, 조코딩 라이브 토크와 풍력발전량 예측 AI 경진대회 시상식을 함께 진행하며 관심 학생과 업계 관계자가 신청할 수 있다.',
-            'sourceUrl': 'https://www.dacon.io/competitions/official/236756/overview/description'
-          }
-
-          matched = False
-          for i, e in enumerate(active):
-              if e.get('title') == event['title'] and e.get('sourceUrl') == event['sourceUrl']:
-                  active[i] = event
-                  matched = True
-                  break
-          if not matched:
-              active.append(event)
 
           data['events'] = active
           data['updatedAt'] = now.isoformat(timespec='seconds')
-          path.write_text(json.dumps(data, ensure_ascii=False, separators=(',', ':')), encoding='utf-8')
+          curated_path.write_text(
+              json.dumps(data, ensure_ascii=False, separators=(',', ':')),
+              encoding='utf-8'
+          )
+
+          # Clear the queue after a successful merge. A second workflow run is harmless.
+          pending_path.write_text(
+              json.dumps({'events': []}, ensure_ascii=False, separators=(',', ':')),
+              encoding='utf-8'
+          )
           PY
+
+      - name: Commit synchronized feed
+        shell: bash
+        run: |
           git config user.name 'DevFeed Bot'
           git config user.email 'actions@github.com'
-          git add devfeed-curated-events.json
+          git add devfeed-curated-events.json devfeed-pending-events.json
           if ! git diff --cached --quiet; then
-            git commit -m 'data: refresh curated events'
+            git commit -m 'data: sync curated events'
+            git pull --rebase origin devfeed-runtime
             git push origin HEAD:devfeed-runtime
           fi
