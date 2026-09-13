@@ -62,7 +62,6 @@ jobs:
           def key(e):
               return (e.get('title'), e.get('sourceUrl'))
 
-          # Upsert pending events by title + sourceUrl while preserving existing events.
           events = list(data.get('events', []))
           index = {key(e): i for i, e in enumerate(events)}
           for event in pending.get('events', []):
@@ -73,7 +72,6 @@ jobs:
                   index[k] = len(events)
                   events.append(event)
 
-          # Apply DevFeed expiry rules after merging, so stale pending items cannot reappear.
           active = []
           for e in events:
               deadline = parse_iso(e.get('deadline'), date_only_end_of_day=True)
@@ -89,7 +87,6 @@ jobs:
                       if end_at and end_at < now:
                           continue
                   elif start_value:
-                      # A single exact start date with no endDate is treated as a one-day event.
                       if len(start_value) >= 10:
                           try:
                               event_day = datetime.fromisoformat(start_value[:10]).date()
@@ -102,16 +99,8 @@ jobs:
 
           data['events'] = active
           data['updatedAt'] = now.isoformat(timespec='seconds')
-          curated_path.write_text(
-              json.dumps(data, ensure_ascii=False, separators=(',', ':')),
-              encoding='utf-8'
-          )
-
-          # Clear the queue after a successful merge. A second workflow run is harmless.
-          pending_path.write_text(
-              json.dumps({'events': []}, ensure_ascii=False, separators=(',', ':')),
-              encoding='utf-8'
-          )
+          curated_path.write_text(json.dumps(data, ensure_ascii=False, separators=(',', ':')), encoding='utf-8')
+          pending_path.write_text(json.dumps({'events': []}, ensure_ascii=False, separators=(',', ':')), encoding='utf-8')
           PY
 
       - name: Commit synchronized feed
@@ -125,3 +114,5 @@ jobs:
             git pull --rebase origin devfeed-runtime
             git push origin HEAD:devfeed-runtime
           fi
+
+# Trigger marker: 2026-09-13 Seoul Big Data Forum sync
