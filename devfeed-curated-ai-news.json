@@ -1,6 +1,15 @@
 {
-  "updatedAt": "2026-09-22T09:10:59+09:00",
+  "updatedAt": "2026-09-28T16:27:40+09:00",
   "videos": [
+    {
+      "videoId": "nZbxgWmgo6M",
+      "title": "IT뉴스 - Opus 5.5, OpenAI DevDay o, GPT-6 Sol, Muse & Meta Connect, Grok 4.7, Qwen-Image-2.1 등",
+      "sourceUrl": "https://www.youtube.com/watch?v=nZbxgWmgo6M",
+      "publishedAt": "2026-09-27T20:17:03+09:00",
+      "channel": "조코딩 JoCoding",
+      "summary": "이번 영상은 Opus 5.5, OpenAI DevDay 관련 소식, GPT-6 Sol, Meta의 Muse와 Meta Connect, Grok 4.7, Qwen-Image-2.1 등 한 주의 여러 AI·IT 이슈를 묶은 장문 IT뉴스다. 제목에 등장하는 주제만 봐도 이번 주의 큰 흐름은 하나의 최고 모델을 고르는 경쟁보다 프런티어 모델, 에이전트, 멀티모달 생성, 실제 사용자 인터페이스가 동시에 발전하고 있다는 점에 있다.\n\nOpus 5.5와 GPT-6 Sol, Grok 4.7처럼 서로 다른 계열의 상위 모델이 함께 언급되는 것은 개발자가 모델 이름이나 단일 벤치마크만 보고 선택하기 어려워졌다는 뜻이다. 실제 프로젝트에서는 같은 코드 수정·문서 분석·도구 호출 작업을 여러 모델에 반복시켜 성공률, 응답 지연, 비용, 구조화 출력 준수율을 함께 비교하는 자체 평가가 더 중요하다. 특히 코딩 에이전트는 기반 모델뿐 아니라 저장소 탐색, 터미널·테스트 연결, 오류 피드백, 재시도 같은 agent harness의 영향을 크게 받으므로 모델 교체가 곧바로 제품 성능 향상을 뜻하지 않는다.\n\nMuse와 Meta Connect 관련 소식은 AI가 채팅창에서 답을 생성하는 도구를 넘어 사용자의 실제 서비스와 기기에서 작업을 수행하는 에이전트·인터페이스로 확장되는 흐름을 보여준다. 외부 도구를 연결할수록 tool calling과 structured output뿐 아니라 권한 범위, 사용자 승인, 행동 로그, 실패 시 복구가 중요해진다. 학생·개발자가 에이전트를 실습할 때도 처음부터 모든 파일과 계정 권한을 열어주기보다 최소 권한과 sandbox를 기본 구조로 두는 편이 좋다.\n\nQwen-Image-2.1처럼 이미지 생성·편집 계열 모델이 계속 발전하는 흐름에서는 단순히 한 장을 생성하는 데모보다 실제 편집 워크플로가 중요해진다. 앱에서는 원본과 결과 파일을 저장하고, 작업 ID와 진행 상태를 관리하며, 실패한 생성 작업을 재시도하고, 이전 결과를 다시 편집할 수 있어야 한다. 즉 생성형 AI가 발전할수록 queue, object storage, 상태 관리, retry 같은 전통적인 백엔드 기본기도 함께 중요해진다.\n\n이번 편을 학생·개발자 관점에서 정리하면 세 가지다. 첫째, 프런티어 모델이 빠르게 늘어나는 만큼 provider abstraction과 model routing을 익혀 모델을 쉽게 교체하고 직접 평가할 수 있어야 한다. 둘째, 에이전트가 실제 도구와 서비스에 연결될수록 permission, sandbox, validation, logging이 모델 성능만큼 중요하다. 셋째, 멀티모달 생성은 단발성 API 호출보다 상태를 가진 제작 파이프라인으로 발전하고 있으므로 queue·storage·streaming·retry를 함께 공부하는 것이 실전적이다. 영상 제목에 포함된 개별 모델의 세부 수치나 미확인 사양은 공식 자료나 영상에서 확인되지 않은 내용을 임의로 확정하지 않는 것이 중요하다.",
+      "highlights": ["Opus 5.5·GPT-6 Sol·Grok 4.7 등 프런티어 모델 경쟁","모델별 자체 평가와 provider abstraction·model routing","Muse·Meta Connect가 보여주는 에이전트·인터페이스 확장","tool calling과 최소 권한·sandbox·행동 로그","Qwen-Image-2.1과 멀티모달 편집 워크플로","queue·storage·streaming·retry 등 AI 백엔드 기본기"]
+    },
     {
       "videoId": "vrIBLHcqPRs",
       "title": "AI뉴스 - Jev 열풍, OpenAI 해킹, Astra for Law, 구글도 드디어 해킹, Gemini 4 Pro 소문, RSI 등",
@@ -63,15 +72,6 @@
       "channel": "조코딩 JoCoding",
       "summary": "이번 영상은 Astra와 ‘올해 AGI 달성’ 전망, Fable 5.1, 할라피뇨, 넥토리얼, GLM-5.3, 실시간 H3, Gemini Omni 1.1 등 최근 AI 업계의 여러 이슈를 묶은 장문 AI뉴스다. 핵심은 새 모델의 벤치마크를 넘어 장기 작업을 수행하는 에이전트, 실시간 상호작용, 멀티모달 생성처럼 실제 사용 방식이 어떻게 바뀌는지를 보는 것이다. Astra와 AGI 주장은 정의와 평가 기준을 분리해서 볼 필요가 있으며, 학생·개발자는 AGI라는 이름보다 긴 작업 지속성, 도구 사용, 실패 복구, 비용과 지연을 직접 검증하는 편이 유용하다. GLM-5.3 같은 코딩·에이전트 모델에서는 기반 모델뿐 아니라 post-training과 agent harness가 체감 성능을 좌우한다. Fable 5.1과 할라피뇨처럼 여러 모델이 등장하면서 작업별 model routing이 중요해지고, 실시간 H3에서는 latency·streaming·취소·재연결 같은 제품 요소가 핵심이 된다. Gemini Omni 1.1 같은 멀티모달 흐름은 생성형 AI가 단발성 요청에서 상태를 가진 여러 단계의 워크플로로 확장되고 있음을 보여준다.",
       "highlights": ["Astra와 AGI 전망의 장기 자율 작업 논의","작업 지속성·실패 복구·비용·지연 검증","GLM-5.3과 post-training·harness","Fable 5.1·할라피뇨와 model routing","실시간 H3의 latency·streaming","Gemini Omni 1.1의 상태형 멀티모달 워크플로"]
-    },
-    {
-      "videoId": "Xs9wHHv-wak",
-      "title": "IT뉴스 - Astra 임박, 할라피뇨, Fable 5.1, 넥토리얼, GLM-5.3, 실시간 H3, Gemini Omni 1.1 등",
-      "sourceUrl": "https://www.youtube.com/watch?v=Xs9wHHv-wak",
-      "publishedAt": "2026-08-30",
-      "channel": "조코딩 JoCoding",
-      "summary": "이번 영상은 Astra 비공개 테스트와 장기 실행 에이전트, OpenAI 할라피뇨 추론 칩, Fable 5.1, GLM 5.3 Flash·Tencent HY4 Preview·Qwen 계열 오픈웨이트 모델, Gemini Omni 1.1과 MiniMax H3 영상 생성, 넥토리얼의 AI 활용 채용까지 폭넓게 묶은 장문 IT뉴스다. 경쟁의 중심이 모델 점수에서 실제로 며칠 동안 일을 이어갈 수 있는지, 얼마나 싸고 빠르게 추론하는지, 도구와 서비스를 얼마나 자연스럽게 연결하는지로 이동한다. Astra 파트에서는 여러 에이전트를 조율해 수학 증명, 소프트웨어 조작, 데이터 분석 같은 장기 작업을 이어가는 방향이 소개된다. 할라피뇨는 AI 경쟁이 모델을 넘어 추론 칩과 인프라로 번짐을 보여주고, GLM 5.3 Flash 등 오픈웨이트 모델은 양자화·로컬 실행·낮은 추론 비용을 함께 비교하게 한다. MiniMax H3와 Gemini Omni 1.1은 실시간·연속 영상 생성 가능성을 넓히며 queue, 상태 저장, streaming, retry, 파일 스토리지 설계의 필요성을 키운다. 넥토리얼의 채용 변화는 AI로 코드를 만드는 속도보다 결과 검증과 문제 해결 과정을 설명하는 역량이 중요해짐을 보여준다.",
-      "highlights": ["Astra 장기 실행 에이전트와 통제·중단 조건","할라피뇨 추론 칩과 인프라 경쟁","GLM 5.3 Flash 등 오픈웨이트·양자화·로컬 실행","Fable 5.1과 실제 작업 비용","MiniMax H3·Gemini Omni 1.1의 연속 영상 생성","넥토리얼의 AI 활용 문제 해결력 평가"]
     }
   ]
 }
